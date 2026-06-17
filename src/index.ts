@@ -5,6 +5,11 @@ export { Legals, type CaptureSequence, type MoveInfo } from './Legals.js';
 export {
   PieceColor,
   PieceType,
+  assertPieceColor,
+  assertPieceInfo,
+  assertPieceType,
+  isPieceColor,
+  isPieceType,
   pieceSymbol,
   toStringPieceColor,
   toStringPieceType,

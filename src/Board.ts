@@ -1,6 +1,12 @@
 // Bitboard-based 8×8 Thai Checkers board (32 playable dark squares)
 
-import { PieceColor, PieceType, type PieceInfo } from './Piece.js';
+import {
+  PieceColor,
+  PieceType,
+  assertPieceColor,
+  assertPieceInfo,
+  type PieceInfo,
+} from './Piece.js';
 import { Position } from './Position.js';
 
 const BOARD_SQUARES = 32;
@@ -99,6 +105,7 @@ export class Board {
         throw new Error(`Duplicate piece position: ${Position.fromIndex(key).toString()}`);
       }
       seen.add(key);
+      assertPieceInfo(info);
       const mask = bit(key);
       occBits |= mask;
       if (info.color === PieceColor.BLACK) {
@@ -168,6 +175,7 @@ export class Board {
   }
 
   getPieces(color: PieceColor): Pieces {
+    assertPieceColor(color);
     const out: Pieces = new Map();
     for (let i = 0; i < BOARD_SQUARES; i++) {
       const mask = bit(i);

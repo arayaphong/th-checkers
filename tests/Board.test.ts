@@ -138,3 +138,45 @@ describe('Board - piece map keys', () => {
     expect(() => Board.fromPieces(pieces)).toThrow(/Duplicate piece position: B1/);
   });
 });
+
+describe('Board - runtime piece validation', () => {
+  test('fromPieces rejects invalid piece colors', () => {
+    const pieces = new Map<Position, PieceInfo>([
+      [
+        Position.fromString('B1'),
+        { color: 99 as PieceColor, type: PieceType.PION },
+      ],
+    ]);
+
+    expect(() => Board.fromPieces(pieces)).toThrow(RangeError);
+    expect(() => Board.fromPieces(pieces)).toThrow(/Invalid piece color: 99/);
+  });
+
+  test('fromPieces rejects invalid piece types', () => {
+    const pieces = new Map<Position, PieceInfo>([
+      [
+        Position.fromString('B1'),
+        { color: PieceColor.BLACK, type: 99 as PieceType },
+      ],
+    ]);
+
+    expect(() => Board.fromPieces(pieces)).toThrow(RangeError);
+    expect(() => Board.fromPieces(pieces)).toThrow(/Invalid piece type: 99/);
+  });
+
+  test('fromPieces rejects missing piece info', () => {
+    const pieces = new Map<Position, unknown>([
+      [Position.fromString('B1'), undefined],
+    ]);
+
+    expect(() => Board.fromPieces(pieces as Map<Position, PieceInfo>)).toThrow(TypeError);
+    expect(() => Board.fromPieces(pieces as Map<Position, PieceInfo>)).toThrow(/Piece info must be an object/);
+  });
+
+  test('getPieces rejects invalid colors', () => {
+    const board = Board.setup();
+
+    expect(() => board.getPieces(99 as PieceColor)).toThrow(RangeError);
+    expect(() => board.getPieces(99 as PieceColor)).toThrow(/Invalid piece color: 99/);
+  });
+});
