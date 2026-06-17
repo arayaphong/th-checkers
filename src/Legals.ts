@@ -48,7 +48,7 @@ function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
     captured.push(seq[i]);
   }
   return {
-    targetPosition: seq[seq.length - 1], // last element = final landing
+    targetPosition: seq.at(-1) as Position, // last element = final landing
     capturedPositions: captured,
   };
 }

@@ -69,26 +69,13 @@ export class Board {
   static setup(): Board {
     let occBits = 0;
     let blackBits = 0;
-    // Black pieces on rows 0, 1
-    for (let row = 0; row < 2; row++) {
+    // Black home rows are 0-1, white home rows are 6-7 (white stays unset in blackBits)
+    for (const row of [0, 1, 6, 7]) {
       const startCol = row % 2 === 0 ? 1 : 0;
       for (let i = 0; i < 4; i++) {
-        const col = startCol + i * 2;
-        const pos = Position.fromCoords(col, row);
-        const mask = bit(pos.hash());
+        const mask = bit(Position.fromCoords(startCol + i * 2, row).hash());
         occBits |= mask;
-        blackBits |= mask;
-      }
-    }
-    // White pieces on rows 6, 7
-    for (let row = 6; row < 8; row++) {
-      const startCol = row % 2 === 0 ? 1 : 0;
-      for (let i = 0; i < 4; i++) {
-        const col = startCol + i * 2;
-        const pos = Position.fromCoords(col, row);
-        const mask = bit(pos.hash());
-        occBits |= mask;
-        // blackBits and dameBits stay unset for white pions
+        if (row < 2) blackBits |= mask;
       }
     }
     return new Board(occBits, blackBits, 0);
