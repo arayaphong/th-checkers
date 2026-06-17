@@ -93,7 +93,7 @@ export class Position {
         }
       }
     }
-    Position.#allValid = positions;
+    Position.#allValid = Object.freeze(positions);
   }
   static allValid(): readonly Position[] {
     return Position.#allValid;

@@ -1,10 +1,14 @@
 // Thai Checkers piece definitions
 
-export const PieceColor = { WHITE: 0, BLACK: 1 } as const;
-export type PieceColor = typeof PieceColor[keyof typeof PieceColor];
+export enum PieceColor {
+  WHITE = 0,
+  BLACK = 1,
+}
 
-export const PieceType = { PION: 0, DAME: 1 } as const;
-export type PieceType = typeof PieceType[keyof typeof PieceType];
+export enum PieceType {
+  PION = 0,
+  DAME = 1,
+}
 
 export interface PieceInfo {
   color: PieceColor;
