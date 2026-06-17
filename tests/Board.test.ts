@@ -2,6 +2,23 @@ import { Board } from '../src/Board.js';
 import { Position } from '../src/Position.js';
 import { PieceColor, PieceType, type PieceInfo } from '../src/Piece.js';
 
+function piecesFromFirstPositions(count: number): Map<Position, PieceInfo> {
+  return new Map(
+    Position.allValid().slice(0, count).map<[Position, PieceInfo]>(pos => [
+      pos,
+      { color: PieceColor.WHITE, type: PieceType.PION },
+    ]),
+  );
+}
+
+function encodedWithOccupiedSquares(count: number): bigint {
+  let occBits = 0;
+  for (let i = 0; i < count; i++) {
+    occBits |= (1 << i);
+  }
+  return BigInt(occBits >>> 0) << 32n;
+}
+
 describe('Board - immutability', () => {
   test('movePiece returns a new board without changing the original', () => {
     const from = Position.fromCoords(1, 2);
@@ -35,5 +52,28 @@ describe('Board - immutability', () => {
     expect(removed.isOccupied(pos)).toBe(false);
     expect(promoted.isOccupied(pos)).toBe(true);
     expect(promoted.isDamePiece(pos)).toBe(true);
+  });
+});
+
+describe('Board - piece count invariant', () => {
+  test('fromPieces accepts valid 16-piece Thai checkers boards', () => {
+    const board = Board.fromPieces(piecesFromFirstPositions(16));
+
+    expect(board.getPieces(PieceColor.WHITE).size).toBe(16);
+  });
+
+  test('fromPieces rejects boards with more than 16 pieces', () => {
+    expect(() => Board.fromPieces(piecesFromFirstPositions(17))).toThrow(RangeError);
+    expect(() => Board.fromPieces(piecesFromFirstPositions(17))).toThrow(/more than 16 pieces/);
+  });
+
+  test('decode rejects encoded boards with more than 16 occupied squares', () => {
+    expect(() => Board.decode(encodedWithOccupiedSquares(17))).toThrow(RangeError);
+    expect(() => Board.decode(encodedWithOccupiedSquares(17))).toThrow(/more than 16 pieces/);
+  });
+
+  test('decode rejects values outside unsigned 64-bit range', () => {
+    expect(() => Board.decode(-1n)).toThrow(RangeError);
+    expect(() => Board.decode(1n << 64n)).toThrow(RangeError);
   });
 });

@@ -5,10 +5,27 @@ import { Position } from './Position.js';
 
 const BOARD_SQUARES = 32;
 const MAX_PIECES = 16;
+const MAX_ENCODED = (1n << 64n) - 1n;
 
 /** 1 << idx as unsigned 32-bit integer */
 function bit(idx: number): number {
   return (1 << (idx & 0x1f)) >>> 0;
+}
+
+function popCount32(value: number): number {
+  let bits = value >>> 0;
+  let count = 0;
+  while (bits !== 0) {
+    bits &= bits - 1;
+    count++;
+  }
+  return count;
+}
+
+function assertValidPieceCount(count: number): void {
+  if (count > MAX_PIECES) {
+    throw new RangeError(`Thai checkers boards cannot contain more than ${MAX_PIECES} pieces`);
+  }
 }
 
 export type Pieces = Map<Position, PieceInfo>;
@@ -78,6 +95,7 @@ export class Board {
         dameBits &= ~mask;
       }
     }
+    assertValidPieceCount(popCount32(occBits));
     return new Board(occBits, blackBits, dameBits);
   }
 
@@ -86,7 +104,13 @@ export class Board {
   }
 
   static decode(encoded: bigint): Board {
+    if (encoded < 0n || encoded > MAX_ENCODED) {
+      throw new RangeError('Encoded board must be an unsigned 64-bit value');
+    }
+
     const occBits = Number((encoded >> 32n) & 0xffffffffn) >>> 0;
+    assertValidPieceCount(popCount32(occBits));
+
     let blackBits = 0;
     let dameBits = 0;
 
