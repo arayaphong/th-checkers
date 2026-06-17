@@ -38,6 +38,14 @@ import { Board, Game } from 'th-checkers';
 const game = new Game(Board.setup());
 ```
 
+## Board Encoding
+
+Thai checkers uses 8 pieces per side, so a valid board has at most 16 pieces. `Board.encode()` intentionally fits valid boards into 64 bits: 32 bits for occupied playable squares, 16 bits for piece color, and 16 bits for piece type. The color/type bits are stored in occupied-square scan order, not by absolute board square. `Board.fromPieces()` and `Board.decode()` reject boards with more than 16 occupied squares.
+
+## Piece Maps
+
+`Board.getPieces(color)` returns `Map<number, PieceInfo>`, keyed by `Position.hash()` rather than `Position` object identity. Use `Position.fromIndex(index)` when iterating if you need coordinates. `Board.fromPieces()` accepts either stable numeric keys or `Position` keys and rejects duplicate logical squares.
+
 ## Repository
 
 GitHub: <https://github.com/arayaphong/th-checkers>

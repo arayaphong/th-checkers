@@ -1,10 +1,15 @@
-export { Board, type Pieces } from './Board.js';
+export { Board, type PieceEntries, type PieceKey, type Pieces, type PiecePosition } from './Board.js';
 export { Explorer } from './Explorer.js';
 export { Game, boardToString, type Move } from './Game.js';
 export { Legals, type CaptureSequence, type MoveInfo } from './Legals.js';
 export {
   PieceColor,
   PieceType,
+  assertPieceColor,
+  assertPieceInfo,
+  assertPieceType,
+  isPieceColor,
+  isPieceType,
   pieceSymbol,
   toStringPieceColor,
   toStringPieceType,

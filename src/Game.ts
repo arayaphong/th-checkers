@@ -2,7 +2,7 @@
 
 import { PieceColor } from './Piece.js';
 import { Position } from './Position.js';
-import { Board, type Pieces } from './Board.js';
+import { Board } from './Board.js';
 import { Legals } from './Legals.js';
 import { Explorer } from './Explorer.js';
 
@@ -10,6 +10,14 @@ export interface Move {
   from: Position;
   to: Position;
   captured: Position[];
+}
+
+function copyMove(move: Move): Move {
+  return {
+    from: move.from,
+    to: move.to,
+    captured: [...move.captured],
+  };
 }
 
 export function pieceSymbol(isBlack: boolean, isDame: boolean): string {
@@ -78,6 +86,7 @@ export class Game {
   // ─── Core actions ───
 
   selectMove(index: number): void {
+    this.#assertValidMoveIndex(index);
     const move = this.#buildMoveAtIndex(index);
     this.#indexHistory.push(index);
     this.#executeMove(move);
@@ -101,19 +110,19 @@ export class Game {
 
   getMoves(): readonly Move[] {
     this.#updateChoicesCache();
-    return this.#choicesCache;
+    return this.#choicesCache.map(copyMove);
   }
 
   getMoveSequence(): readonly number[] {
-    return this.#indexHistory;
+    return [...this.#indexHistory];
   }
 
   getBoardHistory(): readonly Board[] {
-    return this.#boardHistory;
+    return [...this.#boardHistory];
   }
 
   getEncodedHistory(): readonly bigint[] {
-    return this.#encodedHistory;
+    return [...this.#encodedHistory];
   }
 
   board(): Board {
@@ -128,14 +137,13 @@ export class Game {
 
   #executeMove(move: Move): void {
     const current = this.board();
-    const next = Board.copy(current);
 
     // Move piece
-    next.movePiece(move.from, move.to);
+    let next = current.movePiece(move.from, move.to);
 
     // Remove captured pieces
     for (const cap of move.captured) {
-      next.removePiece(cap);
+      next = next.removePiece(cap);
     }
 
     // Promotion check
@@ -143,7 +151,7 @@ export class Game {
     const color: PieceColor = movedIsBlack ? PieceColor.BLACK : PieceColor.WHITE;
     const promoRow = color === PieceColor.WHITE ? 0 : 7;
     if (move.to.y === promoRow && !current.isDamePiece(move.from)) {
-      next.promotePiece(move.to);
+      next = next.promotePiece(move.to);
     }
 
     this.#boardHistory.push(next);
@@ -174,7 +182,8 @@ export class Game {
     const color = this.player();
     const pieces = board.getPieces(color);
 
-    for (const [pos] of pieces) {
+    for (const [index] of pieces) {
+      const pos = Position.fromIndex(index);
       const explorer = new Explorer(board);
       const legals = explorer.findValidMoves(pos);
       if (!legals.empty()) {
@@ -231,6 +240,18 @@ export class Game {
     return moves;
   }
 
+  #assertValidMoveIndex(index: number): void {
+    if (!Number.isInteger(index)) {
+      throw new RangeError(`Move index must be an integer: ${index}`);
+    }
+
+    const count = this.moveCount();
+    if (index < 0 || index >= count) {
+      const range = count > 0 ? `0-${count - 1}` : 'no legal moves';
+      throw new RangeError(`Move index ${index} out of range; valid range is ${range}`);
+    }
+  }
+
   #buildMoveAtIndex(index: number): Move {
     this.#updateMoveableCache();
 
@@ -260,7 +281,7 @@ export class Game {
       cumulative += size;
     }
 
-    throw new Error(`Move index ${index} out of range`);
+    throw new RangeError(`Move index ${index} out of range`);
   }
 
   // ─── Debug ───

@@ -272,12 +272,14 @@ describe('Game - Undo functionality', () => {
         const blackPieces = afterUndoBoard.getPieces(PieceColor.BLACK);
 
         let promotionProperlyUndone = true;
-        for (const [pos, pieceInfo] of whitePieces) {
+        for (const [index, pieceInfo] of whitePieces) {
+          const pos = Position.fromIndex(index);
           if (pos.y !== 0 && pieceInfo.type === PieceType.DAME) {
             promotionProperlyUndone = false;
           }
         }
-        for (const [pos, pieceInfo] of blackPieces) {
+        for (const [index, pieceInfo] of blackPieces) {
+          const pos = Position.fromIndex(index);
           if (pos.y !== Position.BOARD_SIZE - 1 && pieceInfo.type === PieceType.DAME) {
             promotionProperlyUndone = false;
           }
@@ -325,7 +327,7 @@ describe('Game - Move struct functionality', () => {
 });
 
 // ============================================================================
-// 8. Game - Edge cases (2 tests)
+// 8. Game - Edge cases
 // ============================================================================
 describe('Game - Edge cases', () => {
   test('Empty board game', () => {
@@ -340,6 +342,47 @@ describe('Game - Edge cases', () => {
     ]);
     const game = new Game(Board.fromPieces(pieces));
     expect(game.player()).toBe(PieceColor.WHITE);
+  });
+
+  test('Rejects fractional move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(0.5)).toThrow(RangeError);
+    expect(() => game.selectMove(0.5)).toThrow(/integer/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects non-finite move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(Number.NaN)).toThrow(RangeError);
+    expect(() => game.selectMove(Number.POSITIVE_INFINITY)).toThrow(/integer/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects negative move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(-1)).toThrow(RangeError);
+    expect(() => game.selectMove(-1)).toThrow(/out of range/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects move index equal to move count', () => {
+    const game = new Game();
+    const count = game.moveCount();
+
+    expect(() => game.selectMove(count)).toThrow(RangeError);
+    expect(() => game.selectMove(count)).toThrow(/out of range/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects move selection when no legal moves exist', () => {
+    const game = new Game(Board.empty());
+
+    expect(() => game.selectMove(0)).toThrow(RangeError);
+    expect(() => game.selectMove(0)).toThrow(/no legal moves/);
+    expect(game.getMoveSequence()).toHaveLength(0);
   });
 });
 
@@ -364,6 +407,74 @@ describe('Game - Board manipulation through game', () => {
     const boardRef = game.board();
     const hash = boardRef.encode();
     expect(hash).toBe(game.board().encode());
+  });
+
+  test('Board accessor cannot mutate game state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+    const historyBefore = game.getEncodedHistory()[0];
+    const transformed = game.board().removePiece(Position.fromString('B7'));
+
+    expect(transformed.encode()).not.toBe(before);
+    expect(game.board().encode()).toBe(before);
+    expect(game.getEncodedHistory()[0]).toBe(historyBefore);
+  });
+
+  test('Board history entries cannot mutate game state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+    const transformed = game.getBoardHistory()[0].removePiece(Position.fromString('B7'));
+
+    expect(transformed.encode()).not.toBe(before);
+    expect(game.board().encode()).toBe(before);
+    expect(game.getBoardHistory()[0].encode()).toBe(before);
+  });
+
+  test('Move sequence accessor cannot mutate game state', () => {
+    const game = new Game();
+    game.selectMove(0);
+    const beforeSequence = game.getMoveSequence();
+    const beforePlayer = game.player();
+
+    const exposed = game.getMoveSequence() as number[];
+    exposed.push(99);
+
+    expect(game.getMoveSequence()).toEqual(beforeSequence);
+    expect(game.player()).toBe(beforePlayer);
+  });
+
+  test('Board history accessor cannot remove internal board state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+
+    const exposed = game.getBoardHistory() as Board[];
+    exposed.pop();
+
+    expect(game.board().encode()).toBe(before);
+    expect(game.getBoardHistory()).toHaveLength(1);
+  });
+
+  test('Encoded history accessor cannot mutate internal history', () => {
+    const game = new Game();
+    const before = game.getEncodedHistory();
+
+    const exposed = game.getEncodedHistory() as bigint[];
+    exposed.pop();
+
+    expect(game.getEncodedHistory()).toEqual(before);
+  });
+
+  test('Moves accessor cannot mutate cached choices', () => {
+    const game = new Game();
+    const moveCount = game.moveCount();
+    const moves = game.getMoves() as Move[];
+
+    moves.pop();
+    moves[0].captured.push(Position.fromString('B3'));
+
+    const freshMoves = game.getMoves();
+    expect(freshMoves).toHaveLength(moveCount);
+    expect(freshMoves[0].captured).toHaveLength(0);
   });
 });
 
@@ -462,7 +573,8 @@ describe('Game - Promotion mechanics', () => {
       const updatedBoard = game.board();
       const whitePieces = updatedBoard.getPieces(PieceColor.WHITE);
 
-      for (const [pos, pieceInfo] of whitePieces) {
+      for (const [index, pieceInfo] of whitePieces) {
+        const pos = Position.fromIndex(index);
         if (pos.y === 0) {
           expect(pieceInfo.type).toBe(PieceType.DAME);
         }
@@ -488,13 +600,15 @@ describe('Game - Promotion mechanics', () => {
       const whitePieces = updatedBoard.getPieces(PieceColor.WHITE);
       const blackPieces = updatedBoard.getPieces(PieceColor.BLACK);
 
-      for (const [pos, pieceInfo] of whitePieces) {
+      for (const [index, pieceInfo] of whitePieces) {
+        const pos = Position.fromIndex(index);
         if (pos.y !== 0) {
           expect(pieceInfo.type).toBe(PieceType.PION);
         }
       }
 
-      for (const [pos, pieceInfo] of blackPieces) {
+      for (const [index, pieceInfo] of blackPieces) {
+        const pos = Position.fromIndex(index);
         if (pos.y !== Position.BOARD_SIZE - 1) {
           expect(pieceInfo.type).toBe(PieceType.PION);
         }
@@ -521,7 +635,8 @@ describe('Game - Promotion mechanics', () => {
         const updatedBoard = game.board();
         const blackPieces = updatedBoard.getPieces(PieceColor.BLACK);
 
-        for (const [pos, pieceInfo] of blackPieces) {
+        for (const [index, pieceInfo] of blackPieces) {
+          const pos = Position.fromIndex(index);
           if (pos.y === Position.BOARD_SIZE - 1) {
             expect(pieceInfo.type).toBe(PieceType.DAME);
           }

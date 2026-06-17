@@ -3,6 +3,7 @@
 
 const BOARD_SIZE = 8;
 const MAX_POSITIONS = (BOARD_SIZE * BOARD_SIZE) / 2; // 32
+const POSITION_PATTERN = /^([A-H])([1-8])$/;
 
 export class Position {
   static readonly BOARD_SIZE = BOARD_SIZE;
@@ -12,7 +13,7 @@ export class Position {
 
   /** Internal: construct from validated index. */
   private constructor(index: number) {
-    this.#index = index & 0x1f; // clamp to 0..31
+    this.#index = index;
   }
 
   /** Factory from coordinates. Throws if not a valid black square. */
@@ -24,24 +25,28 @@ export class Position {
     return new Position(index);
   }
 
-  /** Factory from 0-based index (0..31). Clamps out-of-range. */
+  /** Factory from 0-based index (0..31). */
   static fromIndex(index: number): Position {
-    if (index < 0) index = 0;
-    if (index >= MAX_POSITIONS) index = MAX_POSITIONS - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_POSITIONS) {
+      throw new Error(`Invalid position index: ${index}`);
+    }
     return new Position(index);
   }
 
   /** Factory from algebraic notation, e.g. "C4". */
   static fromString(s: string): Position {
-    if (s.length < 2) throw new Error(`Invalid position string: "${s}"`);
-    const x = s.charCodeAt(0) - 'A'.charCodeAt(0);
-    const y = parseInt(s[1], 10) - 1;
+    const match = POSITION_PATTERN.exec(s);
+    if (!match) throw new Error(`Invalid position string: "${s}"`);
+    const x = match[1].charCodeAt(0) - 'A'.charCodeAt(0);
+    const y = Number(match[2]) - 1;
     return Position.fromCoords(x, y);
   }
 
   /** True if (x,y) is a valid black square on the board. */
   static isValid(x: number, y: number): boolean {
     return (
+      Number.isInteger(x) &&
+      Number.isInteger(y) &&
       x >= 0 && x < BOARD_SIZE &&
       y >= 0 && y < BOARD_SIZE &&
       (x + y) % 2 === 1

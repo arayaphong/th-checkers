@@ -29,3 +29,5 @@ Pull requests should include a short summary, test results (`npm test`, `npm run
 ## Agent-Specific Instructions
 
 Do not edit `dist/` by hand; update `src/` and rebuild. Preserve public exports and existing ESM import style unless the package configuration changes too.
+
+`Board.encode()` is intentionally compact for Thai checkers: valid boards contain at most 16 pieces total, so 32 occupancy bits plus 16 color bits and 16 type bits are sufficient. Do not treat the 64-bit layout as lossy unless code starts supporting non-game boards with more than 16 pieces.
