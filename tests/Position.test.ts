@@ -24,3 +24,28 @@ describe('Position - fromString', () => {
     expect(() => Position.fromString('A1')).toThrow(/Invalid coordinates/);
   });
 });
+
+describe('Position - numeric factories', () => {
+  test('fromCoords rejects fractional coordinates', () => {
+    expect(() => Position.fromCoords(1.5, 1.5)).toThrow(/Invalid coordinates/);
+    expect(() => Position.fromCoords(0.5, 0.5)).toThrow(/Invalid coordinates/);
+  });
+
+  test('fromCoords rejects non-finite coordinates', () => {
+    expect(() => Position.fromCoords(Number.NaN, 1)).toThrow(/Invalid coordinates/);
+    expect(() => Position.fromCoords(1, Number.POSITIVE_INFINITY)).toThrow(/Invalid coordinates/);
+  });
+
+  test('fromIndex parses valid indexes', () => {
+    expect(Position.fromIndex(0).toString()).toBe('B1');
+    expect(Position.fromIndex(31).toString()).toBe('G8');
+  });
+
+  test('fromIndex rejects invalid indexes', () => {
+    expect(() => Position.fromIndex(-1)).toThrow(/Invalid position index/);
+    expect(() => Position.fromIndex(32)).toThrow(/Invalid position index/);
+    expect(() => Position.fromIndex(0.5)).toThrow(/Invalid position index/);
+    expect(() => Position.fromIndex(Number.NaN)).toThrow(/Invalid position index/);
+    expect(() => Position.fromIndex(Number.POSITIVE_INFINITY)).toThrow(/Invalid position index/);
+  });
+});
