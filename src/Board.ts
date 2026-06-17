@@ -28,7 +28,18 @@ function assertValidPieceCount(count: number): void {
   }
 }
 
-export type Pieces = Map<Position, PieceInfo>;
+export type PieceKey = number;
+export type PiecePosition = Position | PieceKey;
+export type PieceEntries = Iterable<readonly [PiecePosition, PieceInfo]>;
+export type Pieces = Map<PieceKey, PieceInfo>;
+
+function toPieceKey(position: PiecePosition): PieceKey {
+  if (position instanceof Position) {
+    return position.hash();
+  }
+  Position.fromIndex(position);
+  return position;
+}
 
 export class Board {
   // Bitboards — each bit i corresponds to Position.fromIndex(i)
@@ -77,12 +88,18 @@ export class Board {
     return new Board(occBits, blackBits, 0);
   }
 
-  static fromPieces(pieces: Pieces): Board {
+  static fromPieces(pieces: PieceEntries): Board {
     let occBits = 0;
     let blackBits = 0;
     let dameBits = 0;
-    for (const [pos, info] of pieces) {
-      const mask = bit(pos.hash());
+    const seen = new Set<PieceKey>();
+    for (const [position, info] of pieces) {
+      const key = toPieceKey(position);
+      if (seen.has(key)) {
+        throw new Error(`Duplicate piece position: ${Position.fromIndex(key).toString()}`);
+      }
+      seen.add(key);
+      const mask = bit(key);
       occBits |= mask;
       if (info.color === PieceColor.BLACK) {
         blackBits |= mask;
@@ -158,7 +175,7 @@ export class Board {
       const isBlack = (this.#blackBits & mask) !== 0;
       if ((color === PieceColor.BLACK) !== isBlack) continue;
       const isDame = (this.#dameBits & mask) !== 0;
-      out.set(Position.fromIndex(i), {
+      out.set(i, {
         color: isBlack ? PieceColor.BLACK : PieceColor.WHITE,
         type: isDame ? PieceType.DAME : PieceType.PION,
       });

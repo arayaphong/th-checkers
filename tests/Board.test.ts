@@ -101,3 +101,40 @@ describe('Board - piece count invariant', () => {
     expect(Board.decode(board.encode()).equals(board)).toBe(true);
   });
 });
+
+describe('Board - piece map keys', () => {
+  test('getPieces returns stable position index keys', () => {
+    const board = Board.setup();
+    const pieces = board.getPieces(PieceColor.WHITE);
+    const position = Position.fromString('B7');
+
+    expect(pieces.get(position.hash())).toEqual({
+      color: PieceColor.WHITE,
+      type: PieceType.PION,
+    });
+    expect(pieces.get(Position.fromString('B7').hash())).toEqual(pieces.get(position.hash()));
+  });
+
+  test('fromPieces accepts position index keys', () => {
+    const position = Position.fromString('B1');
+    const board = Board.fromPieces(new Map<number, PieceInfo>([
+      [position.hash(), { color: PieceColor.BLACK, type: PieceType.DAME }],
+    ]));
+
+    expect(board.isOccupied(position)).toBe(true);
+    expect(board.isBlackPiece(position)).toBe(true);
+    expect(board.isDamePiece(position)).toBe(true);
+  });
+
+  test('fromPieces rejects duplicate logical positions', () => {
+    const first = Position.fromString('B1');
+    const second = Position.fromString('B1');
+    const pieces = new Map<Position, PieceInfo>([
+      [first, { color: PieceColor.BLACK, type: PieceType.PION }],
+      [second, { color: PieceColor.WHITE, type: PieceType.DAME }],
+    ]);
+
+    expect(first).not.toBe(second);
+    expect(() => Board.fromPieces(pieces)).toThrow(/Duplicate piece position: B1/);
+  });
+});

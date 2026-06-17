@@ -2,7 +2,7 @@
 
 import { PieceColor } from './Piece.js';
 import { Position } from './Position.js';
-import { Board, type Pieces } from './Board.js';
+import { Board } from './Board.js';
 import { Legals } from './Legals.js';
 import { Explorer } from './Explorer.js';
 
@@ -182,7 +182,8 @@ export class Game {
     const color = this.player();
     const pieces = board.getPieces(color);
 
-    for (const [pos] of pieces) {
+    for (const [index] of pieces) {
+      const pos = Position.fromIndex(index);
       const explorer = new Explorer(board);
       const legals = explorer.findValidMoves(pos);
       if (!legals.empty()) {
