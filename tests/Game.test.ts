@@ -427,6 +427,53 @@ describe('Game - Board manipulation through game', () => {
     expect(game.board().encode()).toBe(before);
     expect(game.getBoardHistory()[0].encode()).toBe(before);
   });
+
+  test('Move sequence accessor cannot mutate game state', () => {
+    const game = new Game();
+    game.selectMove(0);
+    const beforeSequence = game.getMoveSequence();
+    const beforePlayer = game.player();
+
+    const exposed = game.getMoveSequence() as number[];
+    exposed.push(99);
+
+    expect(game.getMoveSequence()).toEqual(beforeSequence);
+    expect(game.player()).toBe(beforePlayer);
+  });
+
+  test('Board history accessor cannot remove internal board state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+
+    const exposed = game.getBoardHistory() as Board[];
+    exposed.pop();
+
+    expect(game.board().encode()).toBe(before);
+    expect(game.getBoardHistory()).toHaveLength(1);
+  });
+
+  test('Encoded history accessor cannot mutate internal history', () => {
+    const game = new Game();
+    const before = game.getEncodedHistory();
+
+    const exposed = game.getEncodedHistory() as bigint[];
+    exposed.pop();
+
+    expect(game.getEncodedHistory()).toEqual(before);
+  });
+
+  test('Moves accessor cannot mutate cached choices', () => {
+    const game = new Game();
+    const moveCount = game.moveCount();
+    const moves = game.getMoves() as Move[];
+
+    moves.pop();
+    moves[0].captured.push(Position.fromString('B3'));
+
+    const freshMoves = game.getMoves();
+    expect(freshMoves).toHaveLength(moveCount);
+    expect(freshMoves[0].captured).toHaveLength(0);
+  });
 });
 
 // ============================================================================

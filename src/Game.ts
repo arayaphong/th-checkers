@@ -12,6 +12,14 @@ export interface Move {
   captured: Position[];
 }
 
+function copyMove(move: Move): Move {
+  return {
+    from: move.from,
+    to: move.to,
+    captured: [...move.captured],
+  };
+}
+
 export function pieceSymbol(isBlack: boolean, isDame: boolean): string {
   return isBlack ? (isDame ? '\u25A1' : '\u25CB') : (isDame ? '\u25A0' : '\u25CF');
 }
@@ -102,19 +110,19 @@ export class Game {
 
   getMoves(): readonly Move[] {
     this.#updateChoicesCache();
-    return this.#choicesCache;
+    return this.#choicesCache.map(copyMove);
   }
 
   getMoveSequence(): readonly number[] {
-    return this.#indexHistory;
+    return [...this.#indexHistory];
   }
 
   getBoardHistory(): readonly Board[] {
-    return this.#boardHistory;
+    return [...this.#boardHistory];
   }
 
   getEncodedHistory(): readonly bigint[] {
-    return this.#encodedHistory;
+    return [...this.#encodedHistory];
   }
 
   board(): Board {
