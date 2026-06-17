@@ -53,21 +53,7 @@ export class Explorer {
   // ─── capture sequence finding ───
 
   #findAllCaptureSequences(from: Position, color: PieceColor, isDame: boolean): CaptureSequence[] {
-    const results: CaptureSequence[] = [];
-    const dirs = getDirs(color, isDame);
-
-    for (const d of dirs) {
-      const caps = this.#findCapturesInDir(this.#board, from, d, isDame);
-      for (const cap of caps) {
-        const sim = this.#applyCapture(this.#board, from, cap[0], cap[1]);
-        const becameDame = !isDame && this.#isPromoted(cap[1], color);
-        const rec = this.#findCapturesFrom(
-          sim, cap[1], color, isDame || becameDame, [cap],
-        );
-        if (rec.length > 0) results.push(...rec);
-        else results.push(cap);
-      }
-    }
+    const results = this.#findCapturesFrom(this.#board, from, color, isDame, []);
 
     // Deduplicate: same captured set + same landing = same sequence
     const seen = new Set<string>();
@@ -120,11 +106,14 @@ export class Explorer {
     return color === PieceColor.WHITE ? pos.y === 0 : pos.y === 7;
   }
 
+  #isOpponentPiece(board: Board, pos: Position, myColor: PieceColor): boolean {
+    return myColor === PieceColor.WHITE ? board.isBlackPiece(pos) : !board.isBlackPiece(pos);
+  }
+
   // ─── find all captures in one direction (dame can have multiple landings) ───
 
   #findCapturesInDir(board: Board, from: Position, dir: Delta, isDame: boolean): CaptureSequence[] {
     const myColor = board.isBlackPiece(from) ? PieceColor.BLACK : PieceColor.WHITE;
-    const oppColor = myColor === PieceColor.BLACK ? PieceColor.WHITE : PieceColor.BLACK;
     const results: CaptureSequence[] = [];
 
     if (isDame) {
@@ -135,9 +124,7 @@ export class Explorer {
       while (Position.isValid(x, y)) {
         const pos = Position.fromCoords(x, y);
         if (board.isOccupied(pos)) {
-          const isOpp = oppColor === PieceColor.BLACK
-            ? board.isBlackPiece(pos)
-            : !board.isBlackPiece(pos);
+          const isOpp = this.#isOpponentPiece(board, pos, myColor);
           if (isOpp && !foundOpponent) {
             foundOpponent = pos;
           } else {
@@ -167,9 +154,7 @@ export class Explorer {
 
     if (!board.isOccupied(midPos) || board.isOccupied(landPos)) return [];
 
-    const isOpp = oppColor === PieceColor.BLACK
-      ? board.isBlackPiece(midPos)
-      : !board.isBlackPiece(midPos);
+    const isOpp = this.#isOpponentPiece(board, midPos, myColor);
     if (!isOpp) return [];
 
     return [[midPos, landPos]];

@@ -3,7 +3,7 @@
 import { PieceColor, pieceSymbol } from './Piece.js';
 import { Position } from './Position.js';
 import { Board } from './Board.js';
-import { Legals } from './Legals.js';
+import { Legals, type MoveInfo } from './Legals.js';
 import { Explorer } from './Explorer.js';
 
 export interface Move {
@@ -192,13 +192,21 @@ export class Game {
     this.#sortedPositionsCache.sort((a, b) => a.compare(b));
   }
 
-  #computeMoveCountFast(): number {
-    let hasCaptures = false;
-    for (const [, legals] of this.#moveableCache) {
-      if (legals.hasCaptured()) { hasCaptures = true; break; }
+  #hasMandatoryCapture(): boolean {
+    for (const legals of this.#moveableCache.values()) {
+      if (legals.hasCaptured()) return true;
     }
+    return false;
+  }
+
+  #toMove(from: Position, info: MoveInfo): Move {
+    return { from, to: info.targetPosition, captured: [...info.capturedPositions] };
+  }
+
+  #computeMoveCountFast(): number {
+    const hasCaptures = this.#hasMandatoryCapture();
     let count = 0;
-    for (const [, legals] of this.#moveableCache) {
+    for (const legals of this.#moveableCache.values()) {
       if (hasCaptures && !legals.hasCaptured()) continue;
       count += legals.size();
     }
@@ -207,15 +215,7 @@ export class Game {
 
   #buildAllMoves(): Move[] {
     const moves: Move[] = [];
-
-    // Check if any capture is available globally
-    let hasCaptures = false;
-    for (const [, legals] of this.#moveableCache) {
-      if (legals.hasCaptured()) {
-        hasCaptures = true;
-        break;
-      }
-    }
+    const hasCaptures = this.#hasMandatoryCapture();
 
     for (const pos of this.#sortedPositionsCache) {
       const legals = this.#moveableCache.get(pos)!;
@@ -224,12 +224,7 @@ export class Game {
       if (hasCaptures && !legals.hasCaptured()) continue;
 
       for (let i = 0; i < legals.size(); i++) {
-        const info = legals.getMoveInfo(i);
-        moves.push({
-          from: pos,
-          to: info.targetPosition,
-          captured: [...info.capturedPositions],
-        });
+        moves.push(this.#toMove(pos, legals.getMoveInfo(i)));
       }
     }
 
@@ -250,14 +245,7 @@ export class Game {
 
   #buildMoveAtIndex(index: number): Move {
     this.#updateMoveableCache();
-
-    let hasCaptures = false;
-    for (const [, legals] of this.#moveableCache) {
-      if (legals.hasCaptured()) {
-        hasCaptures = true;
-        break;
-      }
-    }
+    const hasCaptures = this.#hasMandatoryCapture();
 
     let cumulative = 0;
     for (const pos of this.#sortedPositionsCache) {
@@ -267,12 +255,7 @@ export class Game {
 
       const size = legals.size();
       if (index < cumulative + size) {
-        const info = legals.getMoveInfo(index - cumulative);
-        return {
-          from: pos,
-          to: info.targetPosition,
-          captured: [...info.capturedPositions],
-        };
+        return this.#toMove(pos, legals.getMoveInfo(index - cumulative));
       }
       cumulative += size;
     }
