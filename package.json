@@ -1,0 +1,35 @@
+{
+  "name": "th-checkers",
+  "version": "1.0.0",
+  "description": "Thai checkers game logic implemented in TypeScript.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arayaphong/th-checkers.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arayaphong/th-checkers/issues"
+  },
+  "homepage": "https://github.com/arayaphong/th-checkers#readme",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.11",
+    "typescript": "^5.9.3"
+  }
+}

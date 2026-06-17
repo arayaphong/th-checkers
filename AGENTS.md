@@ -1,0 +1,31 @@
+# Repository Guidelines
+
+## Project Structure & Module Organization
+
+This is a small TypeScript library for Thai checkers game logic. Source files live in `src/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts`, `Piece.ts`, and `Position.ts`. Jest tests live in `tests/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/`.
+
+## Build, Test, and Development Commands
+
+- `npm install`: installs TypeScript, Jest, `ts-jest`, and type definitions.
+- `npm run build`: runs `tsc`, type-checks `src/`, and writes compiled files, declarations, and source maps to `dist/`.
+- `npm test`: runs Jest in ESM mode against `tests/**/*.test.ts`.
+
+There is no local dev server; development is edit, build, and test.
+
+## Coding Style & Naming Conventions
+
+Use TypeScript ES modules and include `.js` extensions in relative imports, matching the existing `ts-jest` ESM setup. Keep `strict` TypeScript compatibility. Use two-space indentation, single quotes, semicolons, and descriptive names. Classes and enum-like exports use PascalCase (`Board`, `PieceColor`); functions, methods, and variables use camelCase (`fromPieces`, `moveCount`). Prefer focused modules and avoid unrelated refactors when changing game rules.
+
+## Testing Guidelines
+
+Tests use Jest with `ts-jest/presets/default-esm`. Place new tests under `tests/` as `Feature.test.ts`, and group behavior with `describe(...)` blocks. Cover board encoding/decoding, move legality, turn changes, captures, promotion, and undo behavior when touched. Run `npm test` before submitting changes; run `npm run build` when changing exported APIs or TypeScript configuration.
+
+## Commit & Pull Request Guidelines
+
+Git history is not accessible in this checkout, so use clear, imperative commit subjects such as `Add forced capture tests` or `Fix dame move generation`. Keep each commit focused on one behavior change.
+
+Pull requests should include a short summary, test results (`npm test`, `npm run build`), and any rule or API behavior changes. Link related issues when available. Screenshots are not needed unless a future UI is added.
+
+## Agent-Specific Instructions
+
+Do not edit `dist/` by hand; update `src/` and rebuild. Preserve public exports and existing ESM import style unless the package configuration changes too.
