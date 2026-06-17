@@ -83,15 +83,19 @@ export class Position {
   }
 
   // --- All valid positions (precomputed) ---
-  static allValid(): Position[] {
-    const out: Position[] = [];
+  static #allValid: readonly Position[];
+  static {
+    const positions: Position[] = [];
     for (let y = 0; y < BOARD_SIZE; y++) {
       for (let x = 0; x < BOARD_SIZE; x++) {
         if (Position.isValid(x, y)) {
-          out.push(Position.fromCoords(x, y));
+          positions.push(Position.fromCoords(x, y));
         }
       }
     }
-    return out;
+    Position.#allValid = positions;
+  }
+  static allValid(): readonly Position[] {
+    return Position.#allValid;
   }
 }

@@ -1,6 +1,6 @@
 // Thai Checkers game state machine
 
-import { PieceColor } from './Piece.js';
+import { PieceColor, pieceSymbol } from './Piece.js';
 import { Position } from './Position.js';
 import { Board } from './Board.js';
 import { Legals } from './Legals.js';
@@ -18,10 +18,6 @@ function copyMove(move: Move): Move {
     to: move.to,
     captured: [...move.captured],
   };
-}
-
-export function pieceSymbol(isBlack: boolean, isDame: boolean): string {
-  return isBlack ? (isDame ? '\u25A1' : '\u25CB') : (isDame ? '\u25A0' : '\u25CF');
 }
 
 export function boardToString(board: Board): string {
@@ -126,7 +122,7 @@ export class Game {
   }
 
   board(): Board {
-    return this.#boardHistory[this.#boardHistory.length - 1];
+    return this.#boardHistory.at(-1)!;
   }
 
   player(): PieceColor {

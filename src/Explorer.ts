@@ -75,7 +75,7 @@ export class Explorer {
     for (const seq of results) {
       const captures: Position[] = [];
       for (let i = 0; i < seq.length; i += 2) captures.push(seq[i]);
-      const landing = seq[seq.length - 1];
+      const landing = seq.at(-1)!;
       const key = captures.map(c => c.hash()).sort((a, b) => a - b).join(',') + '|' + landing.hash();
       if (!seen.has(key)) {
         seen.add(key);
