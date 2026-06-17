@@ -78,6 +78,7 @@ export class Game {
   // ─── Core actions ───
 
   selectMove(index: number): void {
+    this.#assertValidMoveIndex(index);
     const move = this.#buildMoveAtIndex(index);
     this.#indexHistory.push(index);
     this.#executeMove(move);
@@ -230,6 +231,18 @@ export class Game {
     return moves;
   }
 
+  #assertValidMoveIndex(index: number): void {
+    if (!Number.isInteger(index)) {
+      throw new RangeError(`Move index must be an integer: ${index}`);
+    }
+
+    const count = this.moveCount();
+    if (index < 0 || index >= count) {
+      const range = count > 0 ? `0-${count - 1}` : 'no legal moves';
+      throw new RangeError(`Move index ${index} out of range; valid range is ${range}`);
+    }
+  }
+
   #buildMoveAtIndex(index: number): Move {
     this.#updateMoveableCache();
 
@@ -259,7 +272,7 @@ export class Game {
       cumulative += size;
     }
 
-    throw new Error(`Move index ${index} out of range`);
+    throw new RangeError(`Move index ${index} out of range`);
   }
 
   // ─── Debug ───

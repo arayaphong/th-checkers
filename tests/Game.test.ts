@@ -325,7 +325,7 @@ describe('Game - Move struct functionality', () => {
 });
 
 // ============================================================================
-// 8. Game - Edge cases (2 tests)
+// 8. Game - Edge cases
 // ============================================================================
 describe('Game - Edge cases', () => {
   test('Empty board game', () => {
@@ -340,6 +340,47 @@ describe('Game - Edge cases', () => {
     ]);
     const game = new Game(Board.fromPieces(pieces));
     expect(game.player()).toBe(PieceColor.WHITE);
+  });
+
+  test('Rejects fractional move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(0.5)).toThrow(RangeError);
+    expect(() => game.selectMove(0.5)).toThrow(/integer/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects non-finite move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(Number.NaN)).toThrow(RangeError);
+    expect(() => game.selectMove(Number.POSITIVE_INFINITY)).toThrow(/integer/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects negative move index', () => {
+    const game = new Game();
+
+    expect(() => game.selectMove(-1)).toThrow(RangeError);
+    expect(() => game.selectMove(-1)).toThrow(/out of range/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects move index equal to move count', () => {
+    const game = new Game();
+    const count = game.moveCount();
+
+    expect(() => game.selectMove(count)).toThrow(RangeError);
+    expect(() => game.selectMove(count)).toThrow(/out of range/);
+    expect(game.getMoveSequence()).toHaveLength(0);
+  });
+
+  test('Rejects move selection when no legal moves exist', () => {
+    const game = new Game(Board.empty());
+
+    expect(() => game.selectMove(0)).toThrow(RangeError);
+    expect(() => game.selectMove(0)).toThrow(/no legal moves/);
+    expect(game.getMoveSequence()).toHaveLength(0);
   });
 });
 
