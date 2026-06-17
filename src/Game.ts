@@ -128,14 +128,13 @@ export class Game {
 
   #executeMove(move: Move): void {
     const current = this.board();
-    const next = Board.copy(current);
 
     // Move piece
-    next.movePiece(move.from, move.to);
+    let next = current.movePiece(move.from, move.to);
 
     // Remove captured pieces
     for (const cap of move.captured) {
-      next.removePiece(cap);
+      next = next.removePiece(cap);
     }
 
     // Promotion check
@@ -143,7 +142,7 @@ export class Game {
     const color: PieceColor = movedIsBlack ? PieceColor.BLACK : PieceColor.WHITE;
     const promoRow = color === PieceColor.WHITE ? 0 : 7;
     if (move.to.y === promoRow && !current.isDamePiece(move.from)) {
-      next.promotePiece(move.to);
+      next = next.promotePiece(move.to);
     }
 
     this.#boardHistory.push(next);

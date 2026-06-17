@@ -59,8 +59,7 @@ export class Explorer {
     for (const d of dirs) {
       const caps = this.#findCapturesInDir(this.#board, from, d, isDame);
       for (const cap of caps) {
-        const sim = Board.copy(this.#board);
-        this.#applyCapture(sim, from, cap[0], cap[1]);
+        const sim = this.#applyCapture(this.#board, from, cap[0], cap[1]);
         const becameDame = !isDame && this.#isPromoted(cap[1], color);
         const rec = this.#findCapturesFrom(
           sim, cap[1], color, isDame || becameDame, [cap],
@@ -96,8 +95,7 @@ export class Explorer {
     for (const d of dirs) {
       const caps = this.#findCapturesInDir(board, pos, d, isDame);
       for (const cap of caps) {
-        const sim = Board.copy(board);
-        this.#applyCapture(sim, pos, cap[0], cap[1]);
+        const sim = this.#applyCapture(board, pos, cap[0], cap[1]);
         const becameDame = !isDame && this.#isPromoted(cap[1], color);
         const rec = this.#findCapturesFrom(
           sim, cap[1], color, isDame || becameDame, [...path, cap],
@@ -117,9 +115,8 @@ export class Explorer {
     return out;
   }
 
-  #applyCapture(board: Board, from: Position, captured: Position, landing: Position): void {
-    board.removePiece(captured);
-    board.movePiece(from, landing);
+  #applyCapture(board: Board, from: Position, captured: Position, landing: Position): Board {
+    return board.removePiece(captured).movePiece(from, landing);
   }
 
   #isPromoted(pos: Position, color: PieceColor): boolean {

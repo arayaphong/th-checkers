@@ -365,6 +365,27 @@ describe('Game - Board manipulation through game', () => {
     const hash = boardRef.encode();
     expect(hash).toBe(game.board().encode());
   });
+
+  test('Board accessor cannot mutate game state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+    const historyBefore = game.getEncodedHistory()[0];
+    const transformed = game.board().removePiece(Position.fromString('B7'));
+
+    expect(transformed.encode()).not.toBe(before);
+    expect(game.board().encode()).toBe(before);
+    expect(game.getEncodedHistory()[0]).toBe(historyBefore);
+  });
+
+  test('Board history entries cannot mutate game state', () => {
+    const game = new Game();
+    const before = game.board().encode();
+    const transformed = game.getBoardHistory()[0].removePiece(Position.fromString('B7'));
+
+    expect(transformed.encode()).not.toBe(before);
+    expect(game.board().encode()).toBe(before);
+    expect(game.getBoardHistory()[0].encode()).toBe(before);
+  });
 });
 
 // ============================================================================
