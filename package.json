@@ -24,6 +24,7 @@
   "homepage": "https://github.com/arayaphong/th-checkers#readme",
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "devDependencies": {
