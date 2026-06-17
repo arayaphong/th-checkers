@@ -76,4 +76,28 @@ describe('Board - piece count invariant', () => {
     expect(() => Board.decode(-1n)).toThrow(RangeError);
     expect(() => Board.decode(1n << 64n)).toThrow(RangeError);
   });
+
+  test('decode rejects metadata bits without occupied squares', () => {
+    expect(() => Board.decode(1n)).toThrow(/not canonical/);
+    expect(() => Board.decode(1n << 16n)).toThrow(/not canonical/);
+  });
+
+  test('decode rejects metadata bits beyond occupied piece count', () => {
+    const oneOccupiedSquare = 1n << 32n;
+    const extraDameBit = 1n << 1n;
+    const extraBlackBit = 1n << 17n;
+
+    expect(() => Board.decode(oneOccupiedSquare | extraDameBit)).toThrow(/not canonical/);
+    expect(() => Board.decode(oneOccupiedSquare | extraBlackBit)).toThrow(/not canonical/);
+  });
+
+  test('decode accepts canonical encoded boards', () => {
+    const pieces = new Map<Position, PieceInfo>([
+      [Position.fromString('B1'), { color: PieceColor.BLACK, type: PieceType.DAME }],
+      [Position.fromString('A2'), { color: PieceColor.WHITE, type: PieceType.PION }],
+    ]);
+    const board = Board.fromPieces(pieces);
+
+    expect(Board.decode(board.encode()).equals(board)).toBe(true);
+  });
 });

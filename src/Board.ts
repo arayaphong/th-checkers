@@ -123,7 +123,12 @@ export class Board {
       if ((low32 & (1 << (count + MAX_PIECES))) !== 0) blackBits |= mask;
       count++;
     }
-    return new Board(occBits, blackBits, dameBits);
+
+    const board = new Board(occBits, blackBits, dameBits);
+    if (board.encode() !== encoded) {
+      throw new Error('Encoded board is not canonical');
+    }
+    return board;
   }
 
   // ─── Queries ───
