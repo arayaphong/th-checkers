@@ -18,6 +18,13 @@ function assertValidIndex(method: string, index: number, length: number): void {
   }
 }
 
+function copyMoveInfo(move: MoveInfo): MoveInfo {
+  return {
+    targetPosition: move.targetPosition,
+    capturedPositions: [...move.capturedPositions],
+  };
+}
+
 function processCaptureSequence(seq: readonly Position[]): MoveInfo {
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
@@ -80,15 +87,15 @@ export class Legals {
       throw new Error('Legals.getCapturePieces: not a capture variant');
     }
     assertValidIndex('Legals.getCapturePieces', index, this.#moves.length);
-    return this.#moves[index].capturedPositions;
+    return [...this.#moves[index].capturedPositions];
   }
 
   getMoveInfo(index: number): MoveInfo {
     assertValidIndex('Legals.getMoveInfo', index, this.#moves.length);
-    return this.#moves[index];
+    return copyMoveInfo(this.#moves[index]);
   }
 
   [Symbol.iterator](): Iterator<MoveInfo> {
-    return this.#moves[Symbol.iterator]();
+    return this.#moves.map(copyMoveInfo)[Symbol.iterator]();
   }
 }

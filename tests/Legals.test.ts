@@ -35,3 +35,39 @@ describe('Legals - index validation', () => {
     expect(() => legals.getCapturePieces(1)).toThrow(RangeError);
   });
 });
+
+describe('Legals - immutability', () => {
+  test('getCapturePieces returns a defensive copy', () => {
+    const legals = new Legals([
+      [Position.fromString('B3'), Position.fromString('A2')],
+    ]);
+
+    const captured = legals.getCapturePieces(0);
+    captured.push(Position.fromString('D3'));
+
+    expect(legals.getCapturePieces(0)).toHaveLength(1);
+    expect(legals.getCapturePieces(0)[0].equals(Position.fromString('B3'))).toBe(true);
+  });
+
+  test('getMoveInfo returns a defensive copy', () => {
+    const legals = new Legals([
+      [Position.fromString('B3'), Position.fromString('A2')],
+    ]);
+
+    const move = legals.getMoveInfo(0);
+    move.capturedPositions.push(Position.fromString('D3'));
+
+    expect(legals.getMoveInfo(0).capturedPositions).toHaveLength(1);
+  });
+
+  test('iterator yields defensive copies', () => {
+    const legals = new Legals([
+      [Position.fromString('B3'), Position.fromString('A2')],
+    ]);
+    const [move] = [...legals];
+
+    move.capturedPositions.push(Position.fromString('D3'));
+
+    expect(legals.getMoveInfo(0).capturedPositions).toHaveLength(1);
+  });
+});
