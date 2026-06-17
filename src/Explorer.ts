@@ -109,10 +109,7 @@ export class Explorer {
   }
 
   #flatten(path: CaptureSequence[], last: CaptureSequence): CaptureSequence {
-    const out: Position[] = [];
-    for (const s of path) { out.push(s[0], s[1]); }
-    out.push(last[0], last[1]);
-    return out;
+    return [...path.flatMap(s => [s[0], s[1]]), last[0], last[1]];
   }
 
   #applyCapture(board: Board, from: Position, captured: Position, landing: Position): Board {
