@@ -25,7 +25,14 @@ function copyMoveInfo(move: MoveInfo): MoveInfo {
   };
 }
 
+function assertValidCaptureSequence(seq: readonly Position[]): void {
+  if (seq.length === 0 || seq.length % 2 !== 0) {
+    throw new Error('Capture sequence must contain captured/landing position pairs');
+  }
+}
+
 function processCaptureSequence(seq: readonly Position[]): MoveInfo {
+  assertValidCaptureSequence(seq);
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
   for (let i = 0; i < seq.length; i += 2) {

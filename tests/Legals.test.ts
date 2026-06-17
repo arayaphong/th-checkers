@@ -71,3 +71,35 @@ describe('Legals - immutability', () => {
     expect(legals.getMoveInfo(0).capturedPositions).toHaveLength(1);
   });
 });
+
+describe('Legals - capture sequence validation', () => {
+  test('rejects empty capture sequence', () => {
+    expect(() => new Legals([[]])).toThrow(/captured\/landing position pairs/);
+  });
+
+  test('rejects single-position capture sequence', () => {
+    expect(() => new Legals([
+      [Position.fromString('B3')],
+    ])).toThrow(/captured\/landing position pairs/);
+  });
+
+  test('rejects odd-length capture sequence', () => {
+    expect(() => new Legals([
+      [Position.fromString('B3'), Position.fromString('A2'), Position.fromString('D3')],
+    ])).toThrow(/captured\/landing position pairs/);
+  });
+
+  test('accepts captured and landing pairs', () => {
+    const legals = new Legals([
+      [
+        Position.fromString('B3'),
+        Position.fromString('A2'),
+        Position.fromString('D3'),
+        Position.fromString('E4'),
+      ],
+    ]);
+
+    expect(legals.getPosition(0).equals(Position.fromString('E4'))).toBe(true);
+    expect(legals.getCapturePieces(0).map(pos => pos.toString())).toEqual(['B3', 'D3']);
+  });
+});
