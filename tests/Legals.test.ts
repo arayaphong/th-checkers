@@ -103,3 +103,50 @@ describe('Legals - capture sequence validation', () => {
     expect(legals.getCapturePieces(0).map(pos => pos.toString())).toEqual(['B3', 'D3']);
   });
 });
+
+describe('Legals - runtime position validation', () => {
+  test('rejects non-Position regular moves', () => {
+    const positions = [{}] as unknown as Position[];
+
+    expect(() => new Legals(positions)).toThrow(TypeError);
+    expect(() => new Legals(positions)).toThrow(/Regular move 0 must be a Position/);
+  });
+
+  test('rejects mixed regular move inputs', () => {
+    const positions = [
+      Position.fromString('B1'),
+      [Position.fromString('B3'), Position.fromString('A2')],
+    ] as unknown as Position[];
+
+    expect(() => new Legals(positions)).toThrow(TypeError);
+    expect(() => new Legals(positions)).toThrow(/Regular move 1 must be a Position/);
+  });
+
+  test('rejects non-Position captured entries', () => {
+    const sequences = [
+      [{} as unknown as Position, Position.fromString('A2')],
+    ];
+
+    expect(() => new Legals(sequences)).toThrow(TypeError);
+    expect(() => new Legals(sequences)).toThrow(/Capture sequence item 0 must be a Position/);
+  });
+
+  test('rejects non-Position landing entries', () => {
+    const sequences = [
+      [Position.fromString('B3'), {} as unknown as Position],
+    ];
+
+    expect(() => new Legals(sequences)).toThrow(TypeError);
+    expect(() => new Legals(sequences)).toThrow(/Capture sequence item 1 must be a Position/);
+  });
+
+  test('rejects mixed capture move inputs', () => {
+    const sequences = [
+      [Position.fromString('B3'), Position.fromString('A2')],
+      Position.fromString('C4'),
+    ] as unknown as Position[][];
+
+    expect(() => new Legals(sequences)).toThrow(TypeError);
+    expect(() => new Legals(sequences)).toThrow(/Capture move 1 must be a capture sequence/);
+  });
+});

@@ -25,13 +25,22 @@ function copyMoveInfo(move: MoveInfo): MoveInfo {
   };
 }
 
-function assertValidCaptureSequence(seq: readonly Position[]): void {
-  if (seq.length === 0 || seq.length % 2 !== 0) {
-    throw new Error('Capture sequence must contain captured/landing position pairs');
+function assertPosition(value: unknown, context: string): asserts value is Position {
+  if (!(value instanceof Position)) {
+    throw new TypeError(`${context} must be a Position`);
   }
 }
 
-function processCaptureSequence(seq: readonly Position[]): MoveInfo {
+function assertValidCaptureSequence(seq: readonly unknown[]): asserts seq is readonly Position[] {
+  if (seq.length === 0 || seq.length % 2 !== 0) {
+    throw new Error('Capture sequence must contain captured/landing position pairs');
+  }
+  for (let i = 0; i < seq.length; i++) {
+    assertPosition(seq[i], `Capture sequence item ${i}`);
+  }
+}
+
+function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
   assertValidCaptureSequence(seq);
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
@@ -62,13 +71,21 @@ export class Legals {
     // Type detection: first item is Position or array
     if (Array.isArray(items[0])) {
       this.#hasCaptures = true;
-      this.#moves = (items as CaptureSequence[]).map(seq => processCaptureSequence(seq));
+      this.#moves = items.map((item, index) => {
+        if (!Array.isArray(item)) {
+          throw new TypeError(`Capture move ${index} must be a capture sequence`);
+        }
+        return processCaptureSequence(item);
+      });
     } else {
       this.#hasCaptures = false;
-      this.#moves = (items as Position[]).map(pos => ({
-        targetPosition: pos,
-        capturedPositions: [],
-      }));
+      this.#moves = items.map((item, index) => {
+        assertPosition(item, `Regular move ${index}`);
+        return {
+          targetPosition: item,
+          capturedPositions: [],
+        };
+      });
     }
   }
 
