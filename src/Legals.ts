@@ -9,6 +9,15 @@ export interface MoveInfo {
 
 export type CaptureSequence = Position[];
 
+function assertValidIndex(method: string, index: number, length: number): void {
+  if (!Number.isInteger(index)) {
+    throw new RangeError(`${method}: index must be an integer`);
+  }
+  if (index < 0 || index >= length) {
+    throw new RangeError(`${method}: index out of range`);
+  }
+}
+
 function processCaptureSequence(seq: readonly Position[]): MoveInfo {
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
@@ -62,9 +71,7 @@ export class Legals {
   }
 
   getPosition(index: number): Position {
-    if (index < 0 || index >= this.#moves.length) {
-      throw new Error('Legals.getPosition: index out of range');
-    }
+    assertValidIndex('Legals.getPosition', index, this.#moves.length);
     return this.#moves[index].targetPosition;
   }
 
@@ -72,16 +79,12 @@ export class Legals {
     if (!this.#hasCaptures) {
       throw new Error('Legals.getCapturePieces: not a capture variant');
     }
-    if (index < 0 || index >= this.#moves.length) {
-      throw new Error('Legals.getCapturePieces: index out of range');
-    }
+    assertValidIndex('Legals.getCapturePieces', index, this.#moves.length);
     return this.#moves[index].capturedPositions;
   }
 
   getMoveInfo(index: number): MoveInfo {
-    if (index < 0 || index >= this.#moves.length) {
-      throw new Error('Legals.getMoveInfo: index out of range');
-    }
+    assertValidIndex('Legals.getMoveInfo', index, this.#moves.length);
     return this.#moves[index];
   }
 
