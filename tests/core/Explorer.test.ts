@@ -1,10 +1,10 @@
 // Comprehensive port of C++ Catch2 tests from ExplorerTest.cpp
 // — 17 TEST_CASE blocks, 37 SECTIONs, 842 lines faithfully ported to Jest/TypeScript
 
-import { Explorer } from '../src/Explorer.js';
-import { Board } from '../src/Board.js';
-import { Position } from '../src/Position.js';
-import { PieceColor, PieceType, type PieceInfo } from '../src/Piece.js';
+import { Explorer } from '../../src/core/Explorer.js';
+import { Board } from '../../src/core/Board.js';
+import { Position } from '../../src/core/Position.js';
+import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';
 
 // ─── helper: build a Pieces Map from entries ───
 function pieces(

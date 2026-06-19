@@ -2,13 +2,13 @@
 
 ## Project Structure & Module Organization
 
-This is a small TypeScript library for Thai checkers game logic. Source files live in `src/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts`, `Piece.ts`, and `Position.ts`. Jest tests live in `tests/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/`.
+This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts`, `Piece.ts`, and `Position.ts`. Jest tests live in `tests/core/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/core/`.
 
 ## Build, Test, and Development Commands
 
 - `npm install`: installs TypeScript, Jest, `ts-jest`, and type definitions.
-- `npm run build`: runs `tsc`, type-checks `src/`, and writes compiled files, declarations, and source maps to `dist/`.
-- `npm test`: runs Jest in ESM mode against `tests/**/*.test.ts`.
+- `npm run build`: runs `tsc`, type-checks `src/core/`, and writes compiled files, declarations, and source maps to `dist/`.
+- `npm test`: runs Jest in ESM mode against `tests/core/**/*.test.ts`.
 
 There is no local dev server; development is edit, build, and test.
 
@@ -18,7 +18,7 @@ Use TypeScript ES modules and include `.js` extensions in relative imports, matc
 
 ## Testing Guidelines
 
-Tests use Jest with `ts-jest/presets/default-esm`. Place new tests under `tests/` as `Feature.test.ts`, and group behavior with `describe(...)` blocks. Cover board encoding/decoding, move legality, turn changes, captures, promotion, and undo behavior when touched. Run `npm test` before submitting changes; run `npm run build` when changing exported APIs or TypeScript configuration.
+Tests use Jest with `ts-jest/presets/default-esm`. Place new tests under `tests/core/` as `Feature.test.ts`, and group behavior with `describe(...)` blocks. Cover board encoding/decoding, move legality, turn changes, captures, promotion, and undo behavior when touched. Run `npm test` before submitting changes; run `npm run build` when changing exported APIs or TypeScript configuration.
 
 ## Commit & Pull Request Guidelines
 
@@ -28,6 +28,6 @@ Pull requests should include a short summary, test results (`npm test`, `npm run
 
 ## Agent-Specific Instructions
 
-Do not edit `dist/` by hand; update `src/` and rebuild. Preserve public exports and existing ESM import style unless the package configuration changes too.
+Do not edit `dist/` by hand; update `src/core/` and rebuild. Preserve public exports and existing ESM import style unless the package configuration changes too.
 
 `Board.encode()` is intentionally compact for Thai checkers: valid boards contain at most 16 pieces total, so 32 occupancy bits plus 16 color bits and 16 type bits are sufficient. Do not treat the 64-bit layout as lossy unless code starts supporting non-game boards with more than 16 pieces.

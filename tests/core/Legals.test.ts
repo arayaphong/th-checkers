@@ -1,5 +1,5 @@
-import { Legals } from '../src/Legals.js';
-import { Position } from '../src/Position.js';
+import { Legals } from '../../src/core/Legals.js';
+import { Position } from '../../src/core/Position.js';
 
 describe('Legals - index validation', () => {
   test('getPosition rejects non-integer indexes', () => {

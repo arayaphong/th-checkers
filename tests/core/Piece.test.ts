@@ -9,7 +9,7 @@ import {
   toStringPieceColor,
   toStringPieceType,
   type PieceInfo,
-} from '../src/Piece.js';
+} from '../../src/core/Piece.js';
 
 describe('Piece - runtime enum validation', () => {
   test('recognizes valid colors and types', () => {

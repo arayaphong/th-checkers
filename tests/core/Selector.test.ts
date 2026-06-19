@@ -1,5 +1,5 @@
-import { Game } from '../src/Game.js';
-import { PieceColor } from '../src/Piece.js';
+import { Game } from '../../src/core/Game.js';
+import { PieceColor } from '../../src/core/Piece.js';
 
 function positionKey(game: Game): bigint {
   const mixer = 0x9e3779b97f4a7c15n;

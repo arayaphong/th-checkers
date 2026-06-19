@@ -1,6 +1,6 @@
 // Move generation — Thai Checkers rules
 
-import { PieceColor, PieceType } from './Piece.js';
+import { PieceColor } from './Piece.js';
 import { Position } from './Position.js';
 import { Board } from './Board.js';
 import { Legals, type CaptureSequence } from './Legals.js';
@@ -62,7 +62,7 @@ export class Explorer {
       const captures: Position[] = [];
       for (let i = 0; i < seq.length; i += 2) captures.push(seq[i]);
       const landing = seq.at(-1)!;
-      const key = captures.map(c => c.hash()).sort((a, b) => a - b).join(',') + '|' + landing.hash();
+      const key = `${captures.map(c => c.hash()).sort((a, b) => a - b).join(',')}|${landing.hash()}`;
       if (!seen.has(key)) {
         seen.add(key);
         deduped.push(seq);

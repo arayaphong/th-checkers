@@ -1,6 +1,6 @@
-import { Board } from '../src/Board.js';
-import { Position } from '../src/Position.js';
-import { PieceColor, PieceType, type PieceInfo } from '../src/Piece.js';
+import { Board } from '../../src/core/Board.js';
+import { Position } from '../../src/core/Position.js';
+import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';
 
 function piecesFromFirstPositions(count: number): Map<Position, PieceInfo> {
   return new Map(

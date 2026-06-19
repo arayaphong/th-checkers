@@ -1,0 +1,806 @@
+:root {
+  --bg-color: #181a1b;
+  --board-light: #eeeed2;
+  --board-dark: #769656;
+  --primary-color: #e8e6e3;
+  --header-bg: #242729;
+  --control-bg: #000000;
+  --p1-color: #e74c3c; /* สีแดง */
+  --p2-color: #111; /* สีดำ */
+  --border-color: #3b4044;
+  --container-bg: #000000;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--primary-color);
+}
+
+header {
+  background-color: transparent;
+  padding: 15px;
+  text-align: center;
+  color: white;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+#game-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.player-card {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 2px solid #7f868a;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #7f868a;
+  transition: color 0.3s;
+  position: relative;
+}
+
+.player-card.active-p1 {
+  color: #ff7675;
+  border-color: #e74c3c;
+  animation: glow-p1 1.2s ease-in-out infinite;
+}
+
+.player-card.active-p2 {
+  color: #bdc3c7;
+  border-color: #7f8c8d;
+  animation: glow-p2 1.2s ease-in-out infinite;
+}
+
+.player-card:not(.active-p1) .icon-p1 {
+  filter: brightness(0.35) saturate(0.6);
+}
+
+@keyframes glow-p1 {
+  0%, 100% { border-color: #e74c3c; box-shadow: 0 0 6px 1px rgba(231,76,60,0.5); }
+  50%       { border-color: #ff9f9f; box-shadow: 0 0 14px 4px rgba(255,118,118,0.85); }
+}
+
+@keyframes glow-p2 {
+  0%, 100% { border-color: #7f8c8d; box-shadow: 0 0 6px 1px rgba(127,140,141,0.5); }
+  50%       { border-color: #dfe6e9; box-shadow: 0 0 14px 4px rgba(189,195,199,0.85); }
+}
+
+section {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--container-bg);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stars-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  background-color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  animation: twinkle infinite ease-in-out;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 0.8; transform: scale(1); box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.4); }
+}
+
+.board-container {
+  flex: 1;
+  padding: 20px;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* กระดาน 8x8 */
+.board-wrapper {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  grid-template-rows: 28px 1fr;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  z-index: 1;
+}
+
+.board-col-labels {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  opacity: 0.7;
+  padding: 0 2px;
+}
+
+.board-row-labels {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  align-items: center;
+  justify-items: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  opacity: 0.7;
+}
+
+.board {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  border: 4px solid var(--primary-color);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.board-row {
+  display: contents;
+}
+
+.square {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.square:focus-visible {
+  outline: 3px solid #f1c40f;
+  outline-offset: -3px;
+  z-index: 4;
+}
+
+.square.light { background-color: var(--board-light); }
+.square.dark { background-color: var(--board-dark); }
+
+/* ลำแสงทองวิ่งวนรอบขอบช่องที่ถูกเลือก */
+@property --bd-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* พื้นช่องที่ถูกเลือก — โทนน้ำเงินเข้ม (สปอตไลต์) ไม่กลืนกับกรอบฟ้า/แสงส้ม */
+.square.selected {
+  background-image: linear-gradient(rgba(26,74,160,0.58), rgba(26,74,160,0.58));
+}
+
+/* กรอบจาง ๆ คงที่ ให้เห็นว่าช่องไหนถูกเลือกตลอดเวลา */
+.square.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  border: 3px solid rgba(56,189,248,0.55);
+  box-shadow: 0 0 5px rgba(56,189,248,0.45);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* ลำแสง (comet) ที่กวาดไปตามขอบ */
+.square.selected::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  padding: 3px;
+  background: conic-gradient(from var(--bd-angle),
+    rgba(255,140,26,0)    0deg,
+    rgba(255,140,26,0)    250deg,
+    rgba(255,160,45,0.6)  300deg,
+    #ffffff               330deg,
+    rgba(255,160,45,0.6)  345deg,
+    rgba(255,140,26,0)    360deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 4px rgba(255,150,30,0.9));
+  animation: bd-run 1.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes bd-run {
+  to { --bd-angle: 360deg; }
+}
+
+.square.valid-move::after {
+  content: '';
+  width: 26%;
+  height: 26%;
+  background-color: rgba(255,255,255,0.85);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.45);
+  border-radius: 50%;
+  position: absolute;
+  cursor: pointer;
+}
+
+/* ตัวหมาก — เม็ดหมากแบนทรงดิสก์ (flat token) มองจากด้านบน */
+.piece {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  position: relative;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+  /* เงาสัมผัสกระดาน + ขอบบนรับแสง + ฐานล่างเป็นเงา (ทรงกระบอกแบน ไม่ใช่ทรงกลม) */
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.45),
+    inset 0 2px 1px rgba(255,255,255,0.22),
+    inset 0 -4px 5px rgba(0,0,0,0.40);
+  z-index: 2;
+}
+
+/* ร่องวงแหวนสลักบนหน้าเม็ด (เม็ดธรรมดา) */
+.piece::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 58%;
+  height: 58%;
+  margin: -29% 0 0 -29%;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 2px 3px rgba(0,0,0,0.45),
+    inset 0 -1px 1px rgba(255,255,255,0.18);
+  border: 1px solid rgba(0,0,0,0.20);
+}
+
+.piece.movable {
+  cursor: pointer;
+}
+
+.piece.movable:hover {
+  transform: scale(1.05);
+}
+
+/* แสงตกแบบบน→ล่าง (flat top) ไม่ใช่ไฮไลต์จุดเดียวแบบลูกบอล */
+.piece.p1 {
+  background: linear-gradient(180deg, #ff8a7a 0%, var(--p1-color) 45%, #b53224 100%);
+}
+
+.piece.p2 {
+  background: linear-gradient(180deg, #5b6366 0%, #24282b 45%, #0c0d0e 100%);
+}
+
+/* ฮอส (King) — ดิสก์ชั้นที่สองวางซ้อนด้านบน แบบหมากฮอสจริง */
+.piece.king::before {
+  content: '';
+  width: 66%;
+  height: 66%;
+  margin: -33% 0 0 -33%;
+  background: inherit;
+  border: none;
+  box-shadow:
+    0 3px 4px rgba(0,0,0,0.50),
+    inset 0 2px 1px rgba(255,255,255,0.28),
+    inset 0 -3px 4px rgba(0,0,0,0.40);
+}
+
+/* มงกุฎทองวางบนเม็ดฮอส (SVG คมชัด แทนอิโมจิเดิม) */
+.piece.king::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 42%;
+  margin: -21% 0 0 -25%;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2048%2040'%3E%3Cpath%20d='M4%2012%20L14%2022%20L24%207%20L34%2022%20L44%2012%20L40%2036%20L8%2036%20Z'%20fill='%23f6d365'%20stroke='%236b4e00'%20stroke-width='2.5'%20stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.55));
+  z-index: 3;
+}
+
+/* เอฟเฟกต์ตอนเข้าฮอส (Promote) */
+.piece.promoted {
+  animation: promote-flash 0.6s ease-in-out forwards;
+  z-index: 10;
+}
+
+.piece.promoted.king::after {
+  animation: crown-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes promote-flash {
+  0% { transform: scale(1); box-shadow: 0 4px 6px rgba(0,0,0,0.45), inset 0 2px 1px rgba(255,255,255,0.22), inset 0 -4px 5px rgba(0,0,0,0.40); }
+  50% { transform: scale(1.25); box-shadow: 0 0 25px 10px rgba(241, 196, 15, 0.8); }
+  100% { transform: scale(1); box-shadow: 0 4px 6px rgba(0,0,0,0.45), inset 0 2px 1px rgba(255,255,255,0.22), inset 0 -4px 5px rgba(0,0,0,0.40); }
+}
+
+@keyframes crown-pop {
+  0% { opacity: 0; transform: translateY(15px) scale(0.5); }
+  60% { opacity: 1; transform: translateY(-5px) scale(1.5); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stats panel */
+#stats-panel {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stats-label {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  opacity: 0.8;
+}
+
+.stats-label .icon-p1 {
+  font-size: 0.75rem;
+}
+
+.stats-divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 0;
+}
+
+.captured-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  min-height: 16px;
+}
+
+.cap-piece {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.55);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cap-piece.p1 {
+  border-color: rgba(231, 76, 60, 0.8);
+  background: rgba(231, 76, 60, 0.8);
+}
+
+.cap-piece.p2 {
+  border-color: rgba(189, 195, 199, 0.8);
+  background: rgba(36, 40, 43, 0.95);
+}
+
+.cap-piece.dame {
+  width: 14px;
+  height: 14px;
+}
+
+.no-captures {
+  font-size: 0.75rem;
+  color: #555;
+}
+
+/* History stack */
+#history-stack {
+  flex: 1;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.history-label {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+#history-list-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#history-list {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 4px;
+}
+
+#history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#history-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+#history-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+#history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.55);
+  padding: 3px 6px 3px 11px;
+  border-radius: 4px;
+}
+
+.history-entry.current {
+  background: rgba(241, 196, 15, 0.18);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 #f1c40f, 0 0 0 1px rgba(241,196,15,0.35);
+}
+
+.history-entry.current .h-num {
+  opacity: 0.9;
+  color: #f6d365;
+}
+
+.history-entry.current .h-dot {
+  box-shadow: 0 0 0 2px rgba(241,196,15,0.45);
+}
+
+.history-entry .h-num {
+  opacity: 0.4;
+  min-width: 16px;
+}
+
+.history-entry .h-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.history-entry .h-dot.p1 { background: rgba(231,76,60,0.8); }
+.history-entry .h-dot.p2 { background: rgba(255,255,255,0.5); }
+
+.history-entry .h-move {
+  font-family: monospace;
+  letter-spacing: 0.03em;
+}
+
+/* แบดจ์บอกการกินหมาก */
+.history-entry .h-capture {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding-left: 6px;
+  color: #ff7043;
+  flex-shrink: 0;
+}
+
+.history-entry .h-capture svg { display: block; }
+
+.history-entry .h-capture .cap-count {
+  font-family: monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+/* ส่วนควบคุม */
+.controls {
+  flex: 0 0 200px;
+  width: 200px;
+  background: transparent;
+  padding: 20px;
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+.controls h3 {
+  margin-bottom: 10px;
+  text-align: center;
+  color: var(--primary-color);
+}
+
+.controls ul {
+  list-style-type: none;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.controls li {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ปุ่มสไตล์ Glassmorphism */
+.controls button {
+  width: 100%;
+  padding: 10px 6px;
+  font-size: 1rem;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.controls button:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(1px);
+}
+
+.controls button:active:not(:disabled) i {
+  transform: translateY(1px);
+  display: inline-block;
+}
+
+.controls button:disabled {
+  color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  cursor: default;
+  text-shadow: none;
+}
+
+.controls .btn-reset {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: #ffcccc;
+}
+
+.controls .btn-reset:hover:not(:disabled) {
+  background: rgba(231, 76, 60, 0.4);
+  border: 1px solid rgba(231, 76, 60, 0.6);
+}
+
+.controls .btn-reset:active:not(:disabled) {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* ป๊อบอัพจบเกม */
+#game-over-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.game-over-modal {
+  background: var(--container-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  max-width: 90%;
+  width: 400px;
+  animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.game-over-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.winner-p1 { color: #e74c3c; text-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+.winner-p2 { color: #bdc3c7; text-shadow: 0 0 10px rgba(189, 195, 199, 0.5); }
+.winner-draw { color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+
+.game-over-desc {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  opacity: 0.8;
+  margin-bottom: 30px;
+}
+
+.game-over-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-review-game {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.btn-review-game:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+.btn-review-game:active {
+  transform: translateY(1px);
+}
+
+.btn-play-again {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+}
+
+.btn-play-again:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+}
+
+.btn-play-again:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(231, 76, 60, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-card.active-p1,
+  .player-card.active-p2,
+  .star,
+  .square.selected::before,
+  .piece.promoted,
+  .piece.promoted.king::after,
+  #game-over-overlay,
+  .game-over-modal {
+    animation: none;
+  }
+
+  .square.selected::before {
+    background: none;
+    filter: none;
+  }
+
+  .square.selected::after {
+    border-color: rgba(56,189,248,0.9);
+    box-shadow: 0 0 8px rgba(56,189,248,0.6);
+  }
+
+  .player-card,
+  .piece,
+  .controls button,
+  .btn-review-game,
+  .btn-play-again {
+    transition: none;
+  }
+
+  .piece.movable:hover,
+  .controls button:hover:not(:disabled),
+  .controls button:active:not(:disabled),
+  .btn-review-game:hover,
+  .btn-review-game:active,
+  .btn-play-again:hover,
+  .btn-play-again:active {
+    transform: none;
+  }
+}

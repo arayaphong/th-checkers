@@ -1,7 +1,7 @@
-import { Game, Move, boardToString } from '../src/Game.js';
-import { Board } from '../src/Board.js';
-import { Position } from '../src/Position.js';
-import { PieceColor, PieceType, pieceSymbol, type PieceInfo } from '../src/Piece.js';
+import { Game, Move, boardToString } from '../../src/core/Game.js';
+import { Board } from '../../src/core/Board.js';
+import { Position } from '../../src/core/Position.js';
+import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';
 
 const MAX_CONSECUTIVE_UNDOS = 4;
 const MAX_TEST_MOVES = 3;

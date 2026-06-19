@@ -1,4 +1,4 @@
-import { Position } from '../src/Position.js';
+import { Position } from '../../src/core/Position.js';
 
 describe('Position - fromString', () => {
   test('parses exact algebraic notation', () => {

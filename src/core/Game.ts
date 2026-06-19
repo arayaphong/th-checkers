@@ -23,7 +23,7 @@ function copyMove(move: Move): Move {
 export function boardToString(board: Board): string {
   let result = '   ';
   for (let col = 0; col < 8; col++) {
-    result += String.fromCharCode('A'.charCodeAt(0) + col) + ' ';
+    result += `${String.fromCharCode('A'.charCodeAt(0) + col)} `;
   }
   result += '\n';
 
@@ -41,7 +41,7 @@ export function boardToString(board: Board): string {
           symbol = ' ';
         }
       }
-      result += symbol + ' ';
+      result += `${symbol} `;
     }
     result += '\n';
   }
