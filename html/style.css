@@ -662,7 +662,10 @@ section {
 #game-over-overlay {
   display: none;
   position: fixed;
-  inset: 0;
+  left: 0;
+  width: 100vw;
+  top: 0;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
