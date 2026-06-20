@@ -65,6 +65,6 @@ export class HistoryView {
   }
 
   #captureIcon() {
-    return `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5 L17.5 17.5" stroke-linecap="round"/></svg>`;
+    return `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true" focusable="false"><use href="svg/capture.svg#icon"></use></svg>`;
   }
 }

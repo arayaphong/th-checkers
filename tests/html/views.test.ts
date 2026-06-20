@@ -1,5 +1,7 @@
 /** @jest-environment jsdom */
 
+import { PieceColor, PieceType } from '../../dist/index.js';
+
 // @ts-expect-error - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
 // @ts-expect-error - browser model is plain JavaScript
@@ -70,6 +72,50 @@ describe('HistoryView', () => {
     expect(entries).toHaveLength(1);
     expect(entries[0].getAttribute('aria-current')).toBe('step');
   });
+
+  test('references the external capture SVG for capture moves', () => {
+    const listEl = document.createElement('div');
+    const store = {
+      historyEntries: () => [
+        {
+          index: 1,
+          move: {
+            from: { toString: () => 'C4' },
+            to: { toString: () => 'G8' },
+            captured: [{}, {}],
+          },
+          mover: PieceColor.WHITE,
+          isCurrent: true,
+        },
+      ],
+    };
+    new HistoryView(listEl, { matchStore: store }).render();
+
+    const use = listEl.querySelector('.h-capture use');
+    expect(use).not.toBeNull();
+    expect(use!.getAttribute('href')).toBe('svg/capture.svg#icon');
+  });
+
+  test('omits the capture badge for non-capture moves', () => {
+    const listEl = document.createElement('div');
+    const store = {
+      historyEntries: () => [
+        {
+          index: 1,
+          move: {
+            from: { toString: () => 'E2' },
+            to: { toString: () => 'D3' },
+            captured: [],
+          },
+          mover: PieceColor.WHITE,
+          isCurrent: true,
+        },
+      ],
+    };
+    new HistoryView(listEl, { matchStore: store }).render();
+
+    expect(listEl.querySelector('.h-capture')).toBeNull();
+  });
 });
 
 describe('StatsView', () => {
@@ -84,6 +130,26 @@ describe('StatsView', () => {
 
     expect(p1.textContent).toContain('ยังไม่ได้กินหมาก');
     expect(p1.querySelector('.no-captures')).not.toBeNull();
+  });
+
+  test('renders captured dames with the external crown SVG', () => {
+    const p1 = document.createElement('div');
+    const p2 = document.createElement('div');
+    const store = {
+      capturedPieces: () => ({
+        capturedByP1: [{ color: PieceColor.BLACK, type: PieceType.DAME }],
+        capturedByP2: [],
+      }),
+    };
+    new StatsView({
+      matchStore: store,
+      capturedByP1El: p1,
+      capturedByP2El: p2,
+    }).render();
+
+    const use = p1.querySelector('.cap-piece.dame use');
+    expect(use).not.toBeNull();
+    expect(use!.getAttribute('href')).toBe('svg/crown.svg#icon');
   });
 });
 

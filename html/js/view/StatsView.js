@@ -35,6 +35,6 @@ export class StatsView {
   }
 
   #crownSvg() {
-    return `<svg viewBox="0 0 20 19" width="12" height="11" fill="#f1c40f" aria-hidden="true" focusable="false"><polygon points="10,1 12.9,7 19.5,7.6 14.7,12 16.2,18.5 10,15 3.8,18.5 5.3,12 0.5,7.6 7.1,7"/></svg>`;
+    return `<svg width="12" height="11" fill="#f1c40f" aria-hidden="true" focusable="false"><use href="svg/crown.svg#icon"></use></svg>`;
   }
 }

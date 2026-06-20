@@ -51,33 +51,10 @@ function build() {
 describe('FocusManager', () => {
   beforeEach(() => setViewport(800, 600));
 
-  function mockSectionRect(
-    section: HTMLElement,
-    { top, bottom, left = 0, right = 760 }: { top: number; bottom: number; left?: number; right?: number },
-  ): void {
-    const height = bottom - top;
-    const width = right - left;
-    Object.defineProperty(section, 'getBoundingClientRect', {
-      configurable: true,
-      value: () => ({
-        x: left,
-        y: top,
-        width,
-        height,
-        top,
-        right,
-        bottom,
-        left,
-        toJSON: () => ({}),
-      }),
-    });
-  }
-
   test('showGameOver inerts the game, opens the modal, and focuses the first button', () => {
     const { section, gameOverView, focusManager } = build();
     const outside = document.getElementById('outside') as HTMLElement;
     outside.focus();
-    mockSectionRect(section, { top: 80, bottom: 520, left: 120, right: 640 });
 
     focusManager.showGameOver(PieceColor.WHITE, 'reason');
 
@@ -85,33 +62,6 @@ describe('FocusManager', () => {
     expect(section.inert).toBe(true);
     expect(document.activeElement).toBe(document.getElementById('review'));
     expect(document.getElementById('winner-title')!.textContent).toContain('ผู้เล่น 1');
-    const overlay = document.getElementById('game-over-overlay') as HTMLElement;
-    expect(overlay.style.left).toBe('120px');
-    expect(overlay.style.width).toBe('520px');
-    expect(overlay.style.top).toBe('80px');
-    expect(overlay.style.height).toBe('440px');
-  });
-
-  test('repositions the game-over overlay on resize while modal is open', () => {
-    const { section, focusManager } = build();
-    mockSectionRect(section, { top: 70, bottom: 600, left: 90, right: 710 });
-
-    focusManager.showGameOver(PieceColor.WHITE, 'reason');
-
-    const overlay = document.getElementById('game-over-overlay') as HTMLElement;
-    expect(overlay.style.left).toBe('90px');
-    expect(overlay.style.width).toBe('620px');
-    expect(overlay.style.top).toBe('70px');
-    expect(overlay.style.height).toBe('530px');
-
-    mockSectionRect(section, { top: 120, bottom: 730, left: -40, right: 840 });
-    setViewport(800, 650); // clamps all sides to viewport bounds
-    focusManager.checkSize();
-
-    expect(overlay.style.left).toBe('0px');
-    expect(overlay.style.width).toBe('800px');
-    expect(overlay.style.top).toBe('120px');
-    expect(overlay.style.height).toBe('530px');
   });
 
   test('hideGameOver restores prior focus and releases inert when the viewport is fine', () => {

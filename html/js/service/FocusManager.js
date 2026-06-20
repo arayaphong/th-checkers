@@ -21,7 +21,6 @@ export class FocusManager {
   }
 
   showGameOver(winnerColor, reason) {
-    this.#positionGameOverOverlay();
     this.#gameOverView.setResult(winnerColor, reason);
 
     if (!this.#gameOverView.isOpen()) {
@@ -58,29 +57,11 @@ export class FocusManager {
 
   // Re-read the window size and show or hide the viewport warning to match.
   checkSize() {
-    if (this.#gameOverView.isOpen()) this.#positionGameOverOverlay();
-
     if (this.#viewportStore.refresh()) {
       this.#showViewport();
     } else {
       this.#hideViewport();
     }
-  }
-
-  #positionGameOverOverlay() {
-    const overlay = this.#gameOverView.element();
-    const rect = this.#section.getBoundingClientRect();
-    const left = Math.max(0, rect.left);
-    const right = Math.min(window.innerWidth, rect.right);
-    const width = Math.max(0, right - left);
-    const top = Math.max(0, rect.top);
-    const bottom = Math.min(window.innerHeight, rect.bottom);
-    const height = Math.max(0, bottom - top);
-
-    overlay.style.left = `${left}px`;
-    overlay.style.width = `${width}px`;
-    overlay.style.top = `${top}px`;
-    overlay.style.height = `${height}px`;
   }
 
   focusBoard() {
