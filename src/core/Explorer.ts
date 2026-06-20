@@ -83,6 +83,13 @@ export class Explorer {
       for (const cap of caps) {
         const sim = this.#applyCapture(board, pos, cap[0], cap[1]);
         const becameDame = !isDame && this.#isPromoted(cap[1], color);
+
+        // No continuation capture this turn
+        if (becameDame) {
+          results.push(this.#flatten(path, cap));
+          continue;
+        }
+
         const rec = this.#findCapturesFrom(
           sim, cap[1], color, isDame || becameDame, [...path, cap],
         );

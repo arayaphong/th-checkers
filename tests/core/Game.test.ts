@@ -100,6 +100,31 @@ describe('Game - Player alternation', () => {
       expect(game.player()).toBe(PieceColor.WHITE);
     }
   });
+
+  test('Turn alternates immediately after capture promotion', () => {
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('B3'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C2'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('E2'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    expect(game.player()).toBe(PieceColor.WHITE);
+    expect(game.moveCount()).toBe(1);
+
+    game.selectMove(0);
+
+    const board = game.board();
+    const promoted = Position.fromString('D1');
+    const stillPresent = Position.fromString('E2');
+
+    expect(game.player()).toBe(PieceColor.BLACK);
+    expect(game.getMoveSequence()).toEqual([0]);
+    expect(board.isOccupied(promoted)).toBe(true);
+    expect(board.isDamePiece(promoted)).toBe(true);
+    expect(board.isOccupied(stillPresent)).toBe(true);
+    expect(board.isBlackPiece(stillPresent)).toBe(true);
+  });
 });
 
 // ============================================================================

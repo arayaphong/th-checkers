@@ -327,6 +327,28 @@ describe('Explorer - Advanced capture scenarios', () => {
       expect(foundChain).toBe(false);
     }
   });
+
+  test('Pion capture into promotion row ends turn immediately', () => {
+    const focus = Position.fromString('B3');
+    const board = Board.fromPieces(
+      pieces(
+        ['B3', PieceColor.WHITE, PieceType.PION],
+        ['C2', PieceColor.BLACK, PieceType.PION],
+        ['E2', PieceColor.BLACK, PieceType.PION],
+      ),
+    );
+    const analyzer = new Explorer(board);
+
+    const options = analyzer.findValidMoves(focus);
+    expect(options.hasCaptured()).toBe(true);
+    expect(options.size()).toBe(1);
+
+    const targetPosition = options.getPosition(0);
+    const capturedPieces = options.getCapturePieces(0);
+
+    expect(targetPosition.equals(Position.fromString('D1'))).toBe(true);
+    expect(capturedPieces.map(pos => pos.toString())).toEqual(['C2']);
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
