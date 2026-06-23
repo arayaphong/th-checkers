@@ -1,3 +1,4 @@
+import { describe, expect, test } from '@jest/globals';
 import { Board } from '../../src/core/Board.js';
 import { Position } from '../../src/core/Position.js';
 import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';

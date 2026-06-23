@@ -1,6 +1,8 @@
+import { describe, expect, test } from '@jest/globals';
 import { Game, Move, boardToString } from '../../src/core/Game.js';
 import { Board } from '../../src/core/Board.js';
 import { Position } from '../../src/core/Position.js';
+import { CaptureTrace } from '../../src/core/Legals.js';
 import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';
 
 const MAX_CONSECUTIVE_UNDOS = 4;
@@ -348,6 +350,134 @@ describe('Game - Move struct functionality', () => {
 
     expect(nonCapture.captured.length).toBe(0);
     expect(capture.captured.length).toBeGreaterThan(0);
+  });
+});
+
+// ============================================================================
+// 7b. Game - Capture trace on Move (7 tests)
+// ============================================================================
+describe('Game - Capture trace on Move', () => {
+  test('non-capture move has no trace', () => {
+    const game = new Game();
+    const moves = game.getMoves();
+    for (const move of moves) {
+      expect(move.trace).toBeUndefined();
+    }
+  });
+
+  test('single capture move has trace with correct structure', () => {
+    // White pion at C4, black pion at B3 — single capture C4→A2 ×B3
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const moves = game.getMoves();
+    expect(moves.length).toBeGreaterThan(0);
+
+    const captureMove = moves.find(m => m.captured.length > 0);
+    expect(captureMove).toBeDefined();
+    expect(captureMove!.trace).toBeDefined();
+    expect(captureMove!.trace!.length).toBe(1);
+    expect(captureMove!.trace!.sequence).toHaveLength(2);
+    // sequence: [captured, landing]
+    expect(captureMove!.trace!.sequence[0].equals(Position.fromString('B3'))).toBe(true);
+    expect(captureMove!.trace!.sequence[1].equals(Position.fromString('A2'))).toBe(true);
+  });
+
+  test('capture trace.captured matches Move.captured', () => {
+    // White at C4, black at B3 — single capture C4→A2 ×B3
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const moves = game.getMoves();
+    const captureMove = moves.find(m => m.captured.length > 0);
+    expect(captureMove).toBeDefined();
+    expect(captureMove!.trace).toBeDefined();
+
+    // trace.captured should match Move.captured
+    const traceCaps = captureMove!.trace!.captured;
+    expect(traceCaps.length).toBe(captureMove!.captured.length);
+    for (let i = 0; i < traceCaps.length; i++) {
+      expect(traceCaps[i].equals(captureMove!.captured[i])).toBe(true);
+    }
+  });
+
+  test('capture trace.path includes all landings', () => {
+    // Double capture: B5 ×C4→D3 ×E2→F1
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('B5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('E2'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const moves = game.getMoves();
+    const captureMove = moves.find(m => m.trace && m.trace.length === 2);
+    expect(captureMove).toBeDefined();
+
+    const path = captureMove!.trace!.path(captureMove!.from);
+    expect(path.length).toBe(3); // from, landing1, landing2
+    expect(path[0].equals(captureMove!.from)).toBe(true);
+    // landing1 = D3, landing2 = F1 (the final to)
+    expect(path[path.length - 1].equals(captureMove!.to)).toBe(true);
+  });
+
+  test('getMoves returns defensive copy of trace', () => {
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const moves1 = game.getMoves();
+    const moves2 = game.getMoves();
+
+    const cap1 = moves1.find(m => m.trace)!;
+    const cap2 = moves2.find(m => m.trace)!;
+
+    // Mutating cap1's captured shouldn't affect cap2
+    cap1.captured.push(Position.fromString('D5'));
+    expect(cap2.captured.length).toBe(1);
+  });
+
+  test('Game.copy preserves capture trace', () => {
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const original = Game.copy(game);
+    const origMoves = original.getMoves();
+    const origCap = origMoves.find(m => m.trace)!;
+    expect(origCap.trace).toBeDefined();
+
+    const copied = Game.copy(original);
+    const copiedMoves = copied.getMoves();
+    const copiedCap = copiedMoves.find(m => m.trace)!;
+    expect(copiedCap.trace).toBeDefined();
+    expect(copiedCap.trace!.length).toBe(origCap.trace!.length);
+    expect(copiedCap.trace!.toString()).toBe(origCap.trace!.toString());
+  });
+
+  test('trace.finalLanding matches Move.to', () => {
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+
+    const moves = game.getMoves();
+    for (const move of moves) {
+      if (move.trace) {
+        expect(move.trace.finalLanding.equals(move.to)).toBe(true);
+      }
+    }
   });
 });
 

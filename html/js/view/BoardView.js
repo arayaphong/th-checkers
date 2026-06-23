@@ -3,20 +3,22 @@
 // forwarded to the controller via the `onActivate` callback; all match and
 // selection state is supplied by the caller.
 import { BOARD_SIZE, htmlToPos, isDarkSquare, pieceColorClass } from '../util/coords.js';
-import { squareLabel } from '../util/strings.th.js';
 import { PieceColor } from '../../../dist/index.js';
+import { i18n as defaultI18n } from '../i18n/i18n.js';
 
 export class BoardView {
   #boardEl;
   #matchStore;
   #onActivate;
+  #i18n;
   #focusedSquare = { r: 0, c: 1 };
   #restoreFocus = false;
 
-  constructor(boardEl, { matchStore, onActivate }) {
+  constructor(boardEl, { matchStore, onActivate, i18n = defaultI18n }) {
     this.#boardEl = boardEl;
     this.#matchStore = matchStore;
     this.#onActivate = onActivate;
+    this.#i18n = i18n;
   }
 
   // Return the roving tab stop to its initial dark square (new game).
@@ -73,7 +75,7 @@ export class BoardView {
     square.setAttribute('aria-colindex', String(c + 1));
     square.setAttribute(
       'aria-label',
-      squareLabel({
+      this.#i18n.squareLabel({
         r,
         c,
         dark,

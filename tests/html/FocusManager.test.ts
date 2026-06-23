@@ -1,13 +1,15 @@
 /** @jest-environment jsdom */
 
+import { beforeEach, describe, expect, test } from '@jest/globals';
+
 import { PieceColor } from '../../dist/index.js';
-// @ts-expect-error - browser service is plain JavaScript
+// @ts-ignore - browser service is plain JavaScript
 import { FocusManager } from '../../html/js/service/FocusManager.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { GameOverView } from '../../html/js/view/GameOverView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { ViewportView } from '../../html/js/view/ViewportView.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { ViewportStore } from '../../html/js/model/ViewportStore.js';
 
 function setViewport(width: number, height: number): void {
@@ -61,7 +63,7 @@ describe('FocusManager', () => {
     expect(gameOverView.isOpen()).toBe(true);
     expect(section.inert).toBe(true);
     expect(document.activeElement).toBe(document.getElementById('review'));
-    expect(document.getElementById('winner-title')!.textContent).toContain('ผู้เล่น 1');
+    expect(document.getElementById('winner-title')!.textContent).toContain('ผู้เล่นมาคอว์');
   });
 
   test('hideGameOver restores prior focus and releases inert when the viewport is fine', () => {

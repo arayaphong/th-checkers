@@ -5,9 +5,82 @@ import { Position } from './Position.js';
 export interface MoveInfo {
   targetPosition: Position;
   capturedPositions: Position[];
+  /** Raw capture sequence, present only for capture moves.
+   *  Format: [captured1, landing1, captured2, landing2, …, finalLanding]. */
+  captureSequence?: CaptureSequence;
 }
 
 export type CaptureSequence = Position[];
+
+// ─── CaptureTrace ────────────────────────────────────────────────────────────
+
+/**
+ * A dedicated object that preserves the full capture trace:
+ * captured pieces, intermediate landing squares, and the travel path.
+ *
+ * The stored sequence alternates captured and landing positions:
+ * `[captured₁, landing₁, captured₂, landing₂, …, finalLanding]`.
+ *
+ * This is separate from `Move.captured` so the existing flat API stays
+ * compatible while consumers that need the full path can access it.
+ */
+export class CaptureTrace {
+  readonly #sequence: readonly Position[];
+
+  constructor(sequence: readonly Position[]) {
+    if (sequence.length < 2 || sequence.length % 2 !== 0) {
+      throw new Error(
+        `CaptureTrace requires captured/landing pairs, got ${sequence.length} element(s)`,
+      );
+    }
+    this.#sequence = Object.freeze([...sequence]);
+  }
+
+  /** Full raw sequence: `[captured₁, landing₁, …, finalLanding]`. */
+  get sequence(): readonly Position[] {
+    return this.#sequence;
+  }
+
+  /** Just the captured pieces (even indices). */
+  get captured(): Position[] {
+    const result: Position[] = [];
+    for (let i = 0; i < this.#sequence.length; i += 2) {
+      result.push(this.#sequence[i]);
+    }
+    return result;
+  }
+
+  /** The capturing piece's travel path:
+   *  `[from, landing₁, landing₂, …, finalLanding]`. */
+  path(from: Position): Position[] {
+    const result = [from];
+    for (let i = 1; i < this.#sequence.length; i += 2) {
+      result.push(this.#sequence[i]);
+    }
+    return result;
+  }
+
+  /** Number of captures in this trace. */
+  get length(): number {
+    return this.#sequence.length / 2;
+  }
+
+  /** Final landing position (last element of the sequence). */
+  get finalLanding(): Position {
+    return this.#sequence[this.#sequence.length - 1];
+  }
+
+  toString(): string {
+    const parts: string[] = [];
+    for (let i = 0; i < this.#sequence.length; i += 2) {
+      parts.push(`×${this.#sequence[i].toString()}`);
+      if (i + 1 < this.#sequence.length) {
+        parts.push(`→${this.#sequence[i + 1].toString()}`);
+      }
+    }
+    return parts.join(' ');
+  }
+}
 
 function assertValidIndex(method: string, index: number, length: number): void {
   if (!Number.isInteger(index)) {
@@ -19,10 +92,14 @@ function assertValidIndex(method: string, index: number, length: number): void {
 }
 
 function copyMoveInfo(move: MoveInfo): MoveInfo {
-  return {
+  const copy: MoveInfo = {
     targetPosition: move.targetPosition,
     capturedPositions: [...move.capturedPositions],
   };
+  if (move.captureSequence) {
+    copy.captureSequence = [...move.captureSequence];
+  }
+  return copy;
 }
 
 function assertPosition(value: unknown, context: string): asserts value is Position {
@@ -42,14 +119,16 @@ function assertValidCaptureSequence(seq: readonly unknown[]): asserts seq is rea
 
 function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
   assertValidCaptureSequence(seq);
+  const typed = seq as readonly Position[];
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
-  for (let i = 0; i < seq.length; i += 2) {
-    captured.push(seq[i]);
+  for (let i = 0; i < typed.length; i += 2) {
+    captured.push(typed[i]);
   }
   return {
-    targetPosition: seq.at(-1) as Position, // last element = final landing
+    targetPosition: typed.at(-1) as Position, // last element = final landing
     capturedPositions: captured,
+    captureSequence: [...typed],
   };
 }
 

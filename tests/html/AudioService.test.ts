@@ -1,10 +1,12 @@
 /** @jest-environment jsdom */
 
-// @ts-expect-error - browser service is plain JavaScript
+import { beforeEach, describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser service is plain JavaScript
 import { AudioService } from '../../html/js/service/AudioService.js';
-// @ts-expect-error - browser core is plain JavaScript
+// @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
-// @ts-expect-error - browser core is plain JavaScript
+// @ts-ignore - browser core is plain JavaScript
 import { Events } from '../../html/js/core/events.js';
 
 class FakeAudioContext {
@@ -66,6 +68,7 @@ beforeEach(() => {
   FakeAudioContext.created = 0;
   FakeAudioContext.closed = 0;
   FakeAudioContext.started = 0;
+  localStorage.clear();
 });
 
 describe('AudioService', () => {
@@ -105,5 +108,21 @@ describe('AudioService', () => {
     await service.play('capture');
     expect(FakeAudioContext.created).toBe(1);
     expect(FakeAudioContext.started).toBe(2);
+  });
+
+  test('does not play when muted', async () => {
+    const { service } = newService();
+    service.setMuted(true);
+    await service.play('move');
+    expect(FakeAudioContext.created).toBe(0);
+    expect(FakeAudioContext.started).toBe(0);
+  });
+
+  test('toggles mute state and persists it', () => {
+    const { service } = newService();
+    expect(service.isMuted()).toBe(false);
+    service.toggleMuted();
+    expect(service.isMuted()).toBe(true);
+    expect(localStorage.getItem('th-checkers-muted')).toBe('true');
   });
 });

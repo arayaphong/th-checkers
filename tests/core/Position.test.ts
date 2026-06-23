@@ -1,3 +1,4 @@
+import { describe, expect, test } from '@jest/globals';
 import { Position } from '../../src/core/Position.js';
 
 describe('Position - fromString', () => {

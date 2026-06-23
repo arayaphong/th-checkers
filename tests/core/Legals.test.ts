@@ -1,4 +1,5 @@
-import { Legals } from '../../src/core/Legals.js';
+import { describe, expect, test } from '@jest/globals';
+import { Legals, CaptureTrace } from '../../src/core/Legals.js';
 import { Position } from '../../src/core/Position.js';
 
 describe('Legals - index validation', () => {
@@ -148,5 +149,130 @@ describe('Legals - runtime position validation', () => {
 
     expect(() => new Legals(sequences)).toThrow(TypeError);
     expect(() => new Legals(sequences)).toThrow(/Capture move 1 must be a capture sequence/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CaptureTrace
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('CaptureTrace', () => {
+  const B3 = Position.fromString('B3');
+  const A2 = Position.fromString('A2');
+  const D3 = Position.fromString('D3');
+  const E4 = Position.fromString('E4');
+  const F5 = Position.fromString('F5');
+  const G6 = Position.fromString('G6');
+
+  // ── construction ──
+
+  test('constructs with captured/landing pairs', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4]);
+    expect(trace.length).toBe(2);
+    expect(trace.sequence).toHaveLength(4);
+  });
+
+  test('rejects empty sequence', () => {
+    expect(() => new CaptureTrace([])).toThrow(/captured\/landing pairs/);
+  });
+
+  test('rejects single-element sequence', () => {
+    expect(() => new CaptureTrace([B3])).toThrow(/captured\/landing pairs/);
+  });
+
+  test('rejects odd-length sequence', () => {
+    expect(() => new CaptureTrace([B3, A2, D3])).toThrow(/captured\/landing pairs/);
+  });
+
+  // ── sequence ──
+
+  test('sequence is frozen (immutable)', () => {
+    const trace = new CaptureTrace([B3, A2]);
+    expect(() => {
+      (trace.sequence as Position[]).push(D3);
+    }).toThrow();
+  });
+
+  test('sequence preserves order', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4]);
+    expect(trace.sequence[0].equals(B3)).toBe(true);
+    expect(trace.sequence[1].equals(A2)).toBe(true);
+    expect(trace.sequence[2].equals(D3)).toBe(true);
+    expect(trace.sequence[3].equals(E4)).toBe(true);
+  });
+
+  // ── captured ──
+
+  test('captured returns only captured pieces (even indices)', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4, F5, G6]);
+    const caps = trace.captured;
+    expect(caps).toHaveLength(3);
+    expect(caps[0].equals(B3)).toBe(true);
+    expect(caps[1].equals(D3)).toBe(true);
+    expect(caps[2].equals(F5)).toBe(true);
+  });
+
+  test('captured is a defensive copy', () => {
+    const trace = new CaptureTrace([B3, A2]);
+    const caps = trace.captured;
+    caps.push(D3);
+    expect(trace.captured).toHaveLength(1);
+  });
+
+  // ── path ──
+
+  test('path returns travel from given start position', () => {
+    const from = Position.fromString('C4');
+    const trace = new CaptureTrace([B3, A2, D3, E4]);
+    const path = trace.path(from);
+    expect(path).toHaveLength(3);
+    expect(path[0].equals(from)).toBe(true);
+    expect(path[1].equals(A2)).toBe(true);
+    expect(path[2].equals(E4)).toBe(true);
+  });
+
+  test('path with single capture', () => {
+    const from = Position.fromString('C4');
+    const trace = new CaptureTrace([Position.fromString('D3'), Position.fromString('E2')]);
+    const path = trace.path(from);
+    expect(path).toHaveLength(2);
+    expect(path[0].equals(from)).toBe(true);
+    expect(path[1].equals(Position.fromString('E2'))).toBe(true);
+  });
+
+  // ── length ──
+
+  test('length is number of captures', () => {
+    expect(new CaptureTrace([B3, A2]).length).toBe(1);
+    expect(new CaptureTrace([B3, A2, D3, E4]).length).toBe(2);
+    expect(new CaptureTrace([B3, A2, D3, E4, F5, G6]).length).toBe(3);
+  });
+
+  // ── finalLanding ──
+
+  test('finalLanding is last element of sequence', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4]);
+    expect(trace.finalLanding.equals(E4)).toBe(true);
+  });
+
+  test('finalLanding with single capture', () => {
+    const trace = new CaptureTrace([B3, A2]);
+    expect(trace.finalLanding.equals(A2)).toBe(true);
+  });
+
+  // ── toString ──
+
+  test('toString single capture', () => {
+    const trace = new CaptureTrace([B3, A2]);
+    expect(trace.toString()).toBe('×B3 →A2');
+  });
+
+  test('toString double capture', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4]);
+    expect(trace.toString()).toBe('×B3 →A2 ×D3 →E4');
+  });
+
+  test('toString triple capture', () => {
+    const trace = new CaptureTrace([B3, A2, D3, E4, F5, G6]);
+    expect(trace.toString()).toBe('×B3 →A2 ×D3 →E4 ×F5 →G6');
   });
 });

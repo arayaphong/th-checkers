@@ -26,8 +26,8 @@
     "build": "tsc",
     "start": "npm run build && node dist/app/index.js",
     "prepare": "npm run build",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:dom": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand tests/html/game.test.ts",
+    "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:dom": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand tests/html/game.test.ts",
     "test:e2e": "npm run build && playwright test",
     "lint": "eslint html/js html/game.js src tests",
     "test:all": "npm test -- --runInBand && npm run test:e2e"

@@ -1,32 +1,34 @@
 /** @jest-environment jsdom */
 
-// @ts-expect-error - browser core is plain JavaScript
+import { beforeAll, describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { MatchStore } from '../../html/js/model/MatchStore.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { SelectionStore } from '../../html/js/model/SelectionStore.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { ViewportStore } from '../../html/js/model/ViewportStore.js';
-// @ts-expect-error - browser service is plain JavaScript
+// @ts-ignore - browser service is plain JavaScript
 import { Animator } from '../../html/js/service/Animator.js';
-// @ts-expect-error - browser service is plain JavaScript
+// @ts-ignore - browser service is plain JavaScript
 import { FocusManager } from '../../html/js/service/FocusManager.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { BoardView } from '../../html/js/view/BoardView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { HistoryView } from '../../html/js/view/HistoryView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { StatsView } from '../../html/js/view/StatsView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { StatusView } from '../../html/js/view/StatusView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { GameOverView } from '../../html/js/view/GameOverView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { ViewportView } from '../../html/js/view/ViewportView.js';
-// @ts-expect-error - browser controller is plain JavaScript
+// @ts-ignore - browser controller is plain JavaScript
 import { GameController } from '../../html/js/controller/GameController.js';
-// @ts-expect-error - browser util is plain JavaScript
+// @ts-ignore - browser util is plain JavaScript
 import { posToHtml } from '../../html/js/util/coords.js';
 
 function harness() {
@@ -160,7 +162,8 @@ describe('GameController', () => {
     expect((document.getElementById('btn-undo') as HTMLButtonElement).disabled).toBe(false);
 
     document.getElementById('btn-undo')!.click();
-    expect(document.querySelectorAll('.history-entry')).toHaveLength(0);
+    expect(document.querySelectorAll('.history-entry')).toHaveLength(1);
+    expect(document.querySelectorAll('.history-entry.future')).toHaveLength(1);
     expect((document.getElementById('btn-redo') as HTMLButtonElement).disabled).toBe(false);
   });
 });

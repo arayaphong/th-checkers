@@ -39,10 +39,40 @@ npm run test:all
 Import from the package entry point after building:
 
 ```ts
-import { Board, Game } from 'th-checkers';
+import { Board, Game, Position, PieceColor, PieceType, CaptureTrace } from 'th-checkers';
 
 const game = new Game(Board.setup());
 ```
+
+### Moves & Capture Traces
+
+`Game.getMoves()` returns `readonly Move[]` without executing anything:
+
+```ts
+interface Move {
+  from: Position;          // starting square
+  to: Position;            // final landing square
+  captured: Position[];    // flat list of captured pieces (backward compatible)
+  trace?: CaptureTrace;    // full capture path, present only for capture moves
+}
+```
+
+For non-capture moves, `trace` is `undefined` and `captured` is empty. For capture moves, `trace` provides the complete path:
+
+```ts
+const moves = game.getMoves();
+const capture = moves.find(m => m.trace);
+
+// CaptureTrace properties
+capture.trace.sequence;    // [captured₁, landing₁, captured₂, landing₂, …, finalLanding]
+capture.trace.captured;    // [captured₁, captured₂, …] — just the taken pieces
+capture.trace.path(from);  // [from, landing₁, landing₂, …, finalLanding] — travel path
+capture.trace.length;      // number of captures (sequence.length / 2)
+capture.trace.finalLanding; // same as move.to
+capture.trace.toString();  // "×C6 →D5 ×E4 →F3 ×G2 →H1"
+```
+
+The trace is computed during move generation — no move needs to be executed to inspect it. `Move.captured` remains unchanged as the flat list for backward compatibility.
 
 ## Board Encoding
 

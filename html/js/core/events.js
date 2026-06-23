@@ -22,5 +22,7 @@ export const Events = Object.freeze({
   VIEWPORT_CHANGED: 'viewport:changed', // { tooSmall }
   INTERACTION_LOCKED: 'interaction:locked', // —
   INTERACTION_UNLOCKED: 'interaction:unlocked', // —
-  SOUND_PLAY: 'sound:play', // { kind: 'move' | 'capture' | 'promote' }
+  SOUND_PLAY: 'sound:play', // { kind: 'move' | 'capture' | 'promote' | 'win' }
+  SOUND_WIN_STOP: 'sound:winStop', // —
+  SOUND_MUTED_CHANGED: 'sound:mutedChanged', // { muted: boolean }
 });

@@ -1,6 +1,8 @@
 /** @jest-environment jsdom */
 
-// @ts-expect-error - browser service is plain JavaScript
+import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser service is plain JavaScript
 import { Animator } from '../../html/js/service/Animator.js';
 
 let reducedMotion = true;

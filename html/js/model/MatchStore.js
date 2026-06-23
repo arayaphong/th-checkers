@@ -6,9 +6,12 @@ import { Events } from '../core/events.js';
 import { colorAt } from '../util/coords.js';
 
 export class MatchStore {
+  static STORAGE_KEY = 'th-checkers:match:v1';
+
   #bus;
   #history; // history[0] is the initial position
   #moves; // parallel to history; moves[i] produced history[i]
+  #moveIndexes; // move index sequence used to build #history beyond initial
   #index;
   #game; // live, mutable copy of history[#index]
   #lastMove; // { move, mover } of the most recent commit
@@ -16,12 +19,28 @@ export class MatchStore {
 
   constructor(bus) {
     this.#bus = bus;
-    this.#init();
+    this.#init({ restoreSnapshot: true });
   }
 
-  #init() {
+  #init({ restoreSnapshot }) {
+    const restored = restoreSnapshot ? this.#restore() : null;
+    if (restored) {
+      this.#history = restored.history;
+      this.#moves = restored.moves;
+      this.#moveIndexes = restored.moveIndexes;
+      this.#index = restored.index;
+      this.#game = Game.copy(this.#history[this.#index]);
+      this.#lastMove =
+        this.#index > 0
+          ? { move: this.#moves[this.#index], mover: this.#history[this.#index - 1].player() }
+          : null;
+      this.#lastPromotion = this.#index > 0 ? this.#didPromoteAt(this.#index) : false;
+      return;
+    }
+
     this.#history = [new Game()];
     this.#moves = [null];
+    this.#moveIndexes = [];
     this.#index = 0;
     this.#game = Game.copy(this.#history[0]);
     this.#lastMove = null;
@@ -78,20 +97,37 @@ export class MatchStore {
   // Played moves up to the current position, oldest first.
   historyEntries() {
     const entries = [];
-    for (let i = 1; i <= this.#index; i++) {
+    for (let i = 1; i < this.#history.length; i++) {
       entries.push({
         index: i,
         move: this.#moves[i],
         mover: this.#history[i - 1].player(),
+        promoted: this.#didPromoteAt(i),
         isCurrent: i === this.#index,
+        isFuture: i > this.#index,
       });
     }
     return entries;
   }
 
+  #didPromoteAt(index) {
+    const move = this.#moves[index];
+    if (!move) return false;
+
+    const before = this.#history[index - 1].board();
+    const after = this.#history[index].board();
+    if (!before.isOccupied(move.from) || !after.isOccupied(move.to)) return false;
+
+    const beforeIsBlack = before.isBlackPiece(move.from);
+    const afterIsBlack = after.isBlackPiece(move.to);
+    if (beforeIsBlack !== afterIsBlack) return false;
+
+    return !before.isDamePiece(move.from) && after.isDamePiece(move.to);
+  }
+
   // --- commands ---
   reset() {
-    this.#init();
+    this.#init({ restoreSnapshot: false });
     this.#emit();
   }
 
@@ -101,6 +137,7 @@ export class MatchStore {
     if (this.#index < this.#history.length - 1) {
       this.#history = this.#history.slice(0, this.#index + 1);
       this.#moves = this.#moves.slice(0, this.#index + 1);
+      this.#moveIndexes = this.#moveIndexes.slice(0, this.#index);
     }
 
     const move = this.#game.getMoves()[moveIndex];
@@ -112,6 +149,7 @@ export class MatchStore {
 
     this.#history.push(Game.copy(this.#game));
     this.#moves.push(move);
+    this.#moveIndexes.push(moveIndex);
     this.#index++;
     this.#emit();
     return { move, mover, promoted: this.#lastPromotion };
@@ -141,6 +179,81 @@ export class MatchStore {
   }
 
   #emit() {
+    this.#persist();
     this.#bus.emit(Events.MATCH_CHANGED, { store: this });
+  }
+
+  #restore() {
+    const snapshot = this.#readSnapshot();
+    if (!snapshot) return null;
+
+    const moveIndexes = Array.isArray(snapshot.moveIndexes)
+      ? snapshot.moveIndexes.filter((index) => Number.isInteger(index) && index >= 0)
+      : [];
+
+    const history = [new Game()];
+    const moves = [null];
+    let game = Game.copy(history[0]);
+
+    for (const index of moveIndexes) {
+      const choices = game.getMoves();
+      if (index >= choices.length) {
+        this.#clearSnapshot();
+        return null;
+      }
+      const move = choices[index];
+      game.selectMove(index);
+      history.push(Game.copy(game));
+      moves.push(move);
+    }
+
+    const requestedIndex = Number.isInteger(snapshot.index) ? snapshot.index : history.length - 1;
+    const clampedIndex = Math.max(0, Math.min(requestedIndex, history.length - 1));
+
+    return {
+      history,
+      moves,
+      moveIndexes,
+      index: clampedIndex,
+    };
+  }
+
+  #persist() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(
+        MatchStore.STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          moveIndexes: this.#moveIndexes,
+          index: this.#index,
+        }),
+      );
+    } catch {
+      // Persistence is best-effort; gameplay should continue even if blocked.
+    }
+  }
+
+  #readSnapshot() {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(MatchStore.STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== 1) return null;
+      return parsed;
+    } catch {
+      this.#clearSnapshot();
+      return null;
+    }
+  }
+
+  #clearSnapshot() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.removeItem(MatchStore.STORAGE_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
   }
 }

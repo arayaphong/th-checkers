@@ -4,12 +4,19 @@
 // so callers can rely on the committed state being applied without awaiting.
 const DURATION_MS = 300;
 
+/** @typedef {{ r: number, c: number }} BoardCoord */
+/** @typedef {{ from: BoardCoord, to: BoardCoord, captured?: BoardCoord[] }} MoveAnimation */
+
 export class Animator {
   #prefersReducedMotion() {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   }
 
   // from/to/captured are board coordinates of the form { r, c }.
+  /**
+   * @param {MoveAnimation} move
+   * @param {() => void} onDone
+   */
   move({ from, to, captured = [] }, onDone) {
     if (this.#prefersReducedMotion()) {
       onDone();
@@ -59,6 +66,8 @@ export class Animator {
     });
   }
 
+  /** @param {number} r */
+  /** @param {number} c */
   #square(r, c) {
     return document.querySelector(`.square[data-r="${r}"][data-c="${c}"]`);
   }

@@ -101,6 +101,11 @@ export class Explorer {
     return results;
   }
 
+  /**
+   * Flatten a path of capture steps plus a final step into a single
+   * CaptureSequence.  Each element of `path` is a 2-element pair
+   * `[captured, landing]` produced by {@link #findCapturesInDir}.
+   */
   #flatten(path: CaptureSequence[], last: CaptureSequence): CaptureSequence {
     return [...path.flatMap(s => [s[0], s[1]]), last[0], last[1]];
   }

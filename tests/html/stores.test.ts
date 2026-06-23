@@ -1,8 +1,10 @@
 /** @jest-environment jsdom */
 
-// @ts-expect-error - browser model is plain JavaScript
+import { describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser model is plain JavaScript
 import { SelectionStore } from '../../html/js/model/SelectionStore.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { ViewportStore } from '../../html/js/model/ViewportStore.js';
 
 function setViewport(width: number, height: number): void {

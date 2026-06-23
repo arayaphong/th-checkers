@@ -1,4 +1,6 @@
-// @ts-expect-error - browser core is plain JavaScript
+import { describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
 
 describe('EventBus', () => {

@@ -1,6 +1,7 @@
 // Comprehensive port of C++ Catch2 tests from ExplorerTest.cpp
 // — 17 TEST_CASE blocks, 37 SECTIONs, 842 lines faithfully ported to Jest/TypeScript
 
+import { describe, expect, test } from '@jest/globals';
 import { Explorer } from '../../src/core/Explorer.js';
 import { Board } from '../../src/core/Board.js';
 import { Position } from '../../src/core/Position.js';

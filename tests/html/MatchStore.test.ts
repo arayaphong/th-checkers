@@ -1,9 +1,49 @@
-// @ts-expect-error - browser core is plain JavaScript
+import { describe, expect, test } from '@jest/globals';
+
+// @ts-ignore - browser core is plain JavaScript
 import { Events } from '../../html/js/core/events.js';
-// @ts-expect-error - browser core is plain JavaScript
+// @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { MatchStore } from '../../html/js/model/MatchStore.js';
+
+function withFakeStorage(initial = {}) {
+  const data = new Map(Object.entries(initial));
+  const storage = {
+    getItem: (key: string) => (data.has(key) ? String(data.get(key)) : null),
+    setItem: (key: string, value: string) => {
+      data.set(key, String(value));
+    },
+    removeItem: (key: string) => {
+      data.delete(key);
+    },
+    clear: () => {
+      data.clear();
+    },
+  };
+
+  const hadStorage = Object.prototype.hasOwnProperty.call(globalThis, 'localStorage');
+  const previous = (globalThis as { localStorage?: unknown }).localStorage;
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: storage,
+  });
+
+  return {
+    storage,
+    restore: () => {
+      if (hadStorage) {
+        Object.defineProperty(globalThis, 'localStorage', {
+          configurable: true,
+          value: previous,
+        });
+      } else {
+        // @ts-expect-error test cleanup for injected global
+        delete globalThis.localStorage;
+      }
+    },
+  };
+}
 
 function newStore() {
   const bus = new EventBus();
@@ -52,6 +92,8 @@ describe('MatchStore', () => {
     expect(store.canUndo()).toBe(false);
     expect(store.canRedo()).toBe(true);
     expect(store.lastPromotion()).toBe(false);
+    expect(store.historyEntries()).toHaveLength(1);
+    expect(store.historyEntries()[0]).toMatchObject({ isCurrent: false, isFuture: true });
 
     expect(store.redo()).toBe(true);
     expect(store.index()).toBe(1);
@@ -90,5 +132,41 @@ describe('MatchStore', () => {
     const { capturedByP1, capturedByP2 } = store.capturedPieces();
     expect(capturedByP1).toEqual([]);
     expect(capturedByP2).toEqual([]);
+  });
+
+  test('restores board history and index from localStorage snapshot', () => {
+    const snapshot = JSON.stringify({ version: 1, moveIndexes: [0, 0], index: 1 });
+    const fake = withFakeStorage({ [MatchStore.STORAGE_KEY]: snapshot });
+
+    try {
+      const { store } = newStore();
+      expect(store.index()).toBe(1);
+      expect(store.canUndo()).toBe(true);
+      expect(store.canRedo()).toBe(true);
+      expect(store.historyEntries()).toHaveLength(2);
+      expect(store.historyEntries()[0]).toMatchObject({ isCurrent: true, isFuture: false });
+      expect(store.historyEntries()[1]).toMatchObject({ isCurrent: false, isFuture: true });
+      expect(store.lastMove()).toBeTruthy();
+    } finally {
+      fake.restore();
+    }
+  });
+
+  test('persists move indexes and current index after changes', () => {
+    const fake = withFakeStorage();
+
+    try {
+      const { store } = newStore();
+      store.commit(0);
+      store.commit(0);
+      store.undo();
+
+      const raw = fake.storage.getItem(MatchStore.STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw as string);
+      expect(parsed).toEqual({ version: 1, moveIndexes: [0, 0], index: 1 });
+    } finally {
+      fake.restore();
+    }
   });
 });

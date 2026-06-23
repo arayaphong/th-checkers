@@ -1,5 +1,7 @@
 /** @jest-environment jsdom */
 
+import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals';
+
 import { readFileSync } from 'node:fs';
 
 let reducedMotion = true;
@@ -146,7 +148,7 @@ describe('HTML game client', () => {
       window.setTimeout(() => callback(window.performance.now()), 0);
     setViewport(800, 600);
 
-    // @ts-expect-error The browser client is intentionally plain JavaScript.
+    // @ts-ignore The browser client is intentionally plain JavaScript.
     await import('../../html/game.js');
     window.dispatchEvent(new Event('load'));
   });
@@ -154,6 +156,7 @@ describe('HTML game client', () => {
   beforeEach(() => {
     reducedMotion = true;
     FakeAudioContext.rejectResume = false;
+    localStorage.clear();
     setViewport(800, 600);
     const overlay = element<HTMLElement>('game-over-overlay');
     if (overlay.style.display === 'flex') {
@@ -189,17 +192,18 @@ describe('HTML game client', () => {
     key(target!, ' ');
 
     expect(document.querySelectorAll('.history-entry')).toHaveLength(1);
-    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่น 2');
+    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่นกระตั้ว');
     expect(element<HTMLButtonElement>('btn-undo').disabled).toBe(false);
 
     element<HTMLButtonElement>('btn-undo').click();
-    expect(document.querySelectorAll('.history-entry')).toHaveLength(0);
-    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่น 1');
+    expect(document.querySelectorAll('.history-entry')).toHaveLength(1);
+    expect(document.querySelectorAll('.history-entry.future')).toHaveLength(1);
+    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่นมาคอว์');
     expect(element<HTMLButtonElement>('btn-redo').disabled).toBe(false);
 
     element<HTMLButtonElement>('btn-redo').click();
     expect(document.querySelectorAll('.history-entry')).toHaveLength(1);
-    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่น 2');
+    expect(element('turn-announcement').textContent).toBe('ตาของผู้เล่นกระตั้ว');
   });
 
   test('announces and blocks the game when the viewport is too small', () => {
@@ -227,7 +231,7 @@ describe('HTML game client', () => {
 
     expect(square('G8').querySelector('.piece.king')).not.toBeNull();
     expect(element('captured-by-p1').textContent).toContain('ยังไม่ได้กินหมาก');
-    expect(element('captured-by-p2').textContent).toContain('กินหมากของผู้เล่น 1');
+    expect(element('captured-by-p2').textContent).toContain('กินหมากของผู้เล่นมาคอว์');
     expect(document.querySelectorAll('.history-entry')).toHaveLength(10);
     expect(document.querySelector('.history-entry[aria-current="step"]')).not.toBeNull();
     expect(document.querySelector('.history-entry.current .sr-only')?.textContent).toContain(
@@ -295,5 +299,29 @@ describe('HTML game client', () => {
     element<HTMLButtonElement>('btn-undo').click();
     expect(board.getAttribute('aria-disabled')).toBe('false');
     expect(document.querySelector('.player-card.active-p1, .player-card.active-p2')).not.toBeNull();
+  });
+
+  test('toggles sound on and off', () => {
+    const soundButton = element<HTMLButtonElement>('btn-sound');
+    expect(soundButton.textContent).toBe('🔊');
+    soundButton.click();
+    expect(soundButton.textContent).toBe('🔇');
+    soundButton.click();
+    expect(soundButton.textContent).toBe('🔊');
+  });
+
+  test('switches language between Thai and English', () => {
+    const languageButton = element<HTMLButtonElement>('btn-language');
+    expect(document.documentElement.lang).toBe('th');
+    expect(languageButton.textContent).toBe('EN');
+
+    languageButton.click();
+    expect(document.documentElement.lang).toBe('en');
+    expect(languageButton.textContent).toBe('TH');
+    expect(document.getElementById('board')!.getAttribute('aria-label')).toBe('Checkers board');
+
+    languageButton.click();
+    expect(document.documentElement.lang).toBe('th');
+    expect(languageButton.textContent).toBe('EN');
   });
 });

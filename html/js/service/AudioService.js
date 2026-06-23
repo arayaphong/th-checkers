@@ -3,6 +3,8 @@
 // synthesized tones. Plays a tone in response to each `sound:play` event.
 import { Events } from '../core/events.js';
 
+const MUTE_STORAGE_KEY = 'th-checkers-muted';
+
 // Each entry shapes a tone on a fresh oscillator + gain pair and returns the
 // time at which the oscillator should stop. `now` is the context start time.
 const SOUNDS = {
@@ -38,6 +40,9 @@ export class AudioService {
   #AudioContextClass;
   #ctx = null;
   #initPromise = null;
+  #muted = false;
+  #winGain = null;
+  #winLoop = null;
 
   constructor(bus, { audioContextClass } = {}) {
     this.#bus = bus;
@@ -51,6 +56,95 @@ export class AudioService {
     document.addEventListener('pointerdown', activate, { capture: true });
     document.addEventListener('keydown', activate, { capture: true });
     this.#bus.on(Events.SOUND_PLAY, (type) => this.play(type));
+    this.#bus.on(Events.SOUND_WIN_STOP, () => this.stopWin());
+  }
+
+  isMuted() {
+    return this.#muted;
+  }
+
+  setMuted(muted) {
+    this.#muted = Boolean(muted);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(MUTE_STORAGE_KEY, String(this.#muted));
+      } catch {
+        // Storage is optional; failures should not block audio toggling.
+      }
+    }
+    this.#bus.emit(Events.SOUND_MUTED_CHANGED, this.#muted);
+  }
+
+  toggleMuted() {
+    this.setMuted(!this.#muted);
+  }
+
+  loadMutedPreference() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const saved = localStorage.getItem(MUTE_STORAGE_KEY);
+      if (saved !== null) this.#muted = saved === 'true';
+    } catch {
+      // Storage is optional.
+    }
+  }
+
+  async #playWin() {
+    const ctx = await this.#initialize();
+    if (!ctx || this.#winGain) return;
+
+    this.#winGain = ctx.createGain();
+    this.#winGain.gain.value = 0.38;
+    this.#winGain.connect(ctx.destination);
+    this.#scheduleWinLoop(ctx, ctx.currentTime);
+  }
+
+  #scheduleWinLoop(ctx, startAt) {
+    if (!this.#winGain) return;
+
+    // Melody: C major arpeggio + harmony, 1.5s loop
+    const MELODY = [
+      { freq: 329.63, t: 0.3, dur: 1.2, vol: 0.55 }, // E4
+      { freq: 392.00, t: 0.9, dur: 1.2, vol: 0.55 }, // G4
+      { freq: 523.25, t: 1.6, dur: 1.4, vol: 0.65 }, // C5
+      { freq: 659.25, t: 2.6, dur: 1.1, vol: 0.58 }, // E5
+      { freq: 783.99, t: 3.4, dur: 1.3, vol: 0.62 }, // G5
+      { freq: 1046.5, t: 4.4, dur: 2.0, vol: 0.72 }, // C6
+      // harmony อุ่นๆ
+      { freq: 261.63, t: 0.0, dur: 1.0, vol: 0.18 }, // C4 pad
+      { freq: 196.00, t: 1.6, dur: 3.0, vol: 0.22 }, // G3
+      { freq: 261.63, t: 4.4, dur: 2.0, vol: 0.25 },
+      { freq: 329.63, t: 4.4, dur: 2.0, vol: 0.20 },
+    ];
+
+    for (const { freq, t, dur, vol } of MELODY) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(this.#winGain);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const s = startAt + t;
+      g.gain.setValueAtTime(vol, s);
+      g.gain.exponentialRampToValueAtTime(0.001, s + dur);
+      osc.start(s);
+      osc.stop(s + dur + 0.02);
+    }
+  }
+
+  stopWin() {
+    if (this.#winLoop !== null) {
+      clearTimeout(this.#winLoop);
+      this.#winLoop = null;
+    }
+    if (this.#winGain && this.#ctx?.state === 'running') {
+      const g = this.#winGain;
+      const ctx = this.#ctx;
+      g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      setTimeout(() => { try { g.disconnect(); } catch { /* ignore */ } }, 400);
+    }
+    this.#winGain = null;
   }
 
   async #initialize() {
@@ -87,6 +181,8 @@ export class AudioService {
   }
 
   async play(type) {
+    if (this.#muted) return;
+    if (type === 'win') return this.#playWin();
     const shape = SOUNDS[type];
     if (!shape) return;
     const context = await this.#initialize();

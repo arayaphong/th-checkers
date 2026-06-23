@@ -29,6 +29,18 @@ function square(page: Page, coordinate: string) {
   return page.locator(`.square[data-r="${r}"][data-c="${c}"]`);
 }
 
+test('loads English copy from the shared locale catalog', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./?lang=en');
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('Thai Checkers');
+  await expect(page.locator('#card-p1')).toContainText('Macaw player');
+  await expect(page.locator('#board')).toHaveAttribute('aria-label', 'Checkers board');
+  await expect(page.locator('#turn-announcement')).toHaveText("Macaw player's turn");
+  await expect(page.locator('#btn-reset')).toHaveAttribute('title', 'New game');
+});
+
 test('plays a complete keyboard-accessible game and reviews the result', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
@@ -49,7 +61,7 @@ test('plays a complete keyboard-accessible game and reviews the result', async (
   }
 
   await expect(page.locator('.history-entry')).toHaveCount(20);
-  await expect(page.locator('#captured-by-p2 .sr-only')).toContainText('กินหมากของผู้เล่น 1');
+  await expect(page.locator('#captured-by-p2 .sr-only')).toContainText('กินหมากของผู้เล่นมาคอว์');
   await expect(page.locator('#game-over-overlay')).toBeVisible();
   await expect(page.locator('#board')).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('#btn-review-game')).toBeFocused();
@@ -67,4 +79,26 @@ test('plays a complete keyboard-accessible game and reviews the result', async (
   await expect(page.locator('#too-small-overlay')).toBeVisible();
   await expect(page.locator('#too-small-overlay')).toBeFocused();
   await expect(page.locator('section')).toHaveJSProperty('inert', true);
+});
+
+test('keeps board state and move history after refresh', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await square(page, 'H7').click();
+  await expect(square(page, 'G6')).toHaveClass(/valid-move/);
+  await square(page, 'G6').click();
+
+  await expect(page.locator('.history-entry')).toHaveCount(1);
+  await expect(page.locator('#turn-announcement')).toHaveText('ตาของผู้เล่นกระตั้ว');
+
+  await page.reload();
+
+  await expect(page.locator('.history-entry')).toHaveCount(1);
+  await expect(page.locator('#turn-announcement')).toHaveText('ตาของผู้เล่นกระตั้ว');
+  await expect(square(page, 'H7').locator('.piece')).toHaveCount(0);
+  await expect(square(page, 'G6').locator('.piece')).toHaveCount(1);
+  await expect(page.locator('#btn-undo')).toBeEnabled();
 });

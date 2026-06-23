@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts`, `Piece.ts`, and `Position.ts`. Jest tests live in `tests/core/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/core/`.
+This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts` (also exports `CaptureTrace` and `MoveInfo`), `Piece.ts`, and `Position.ts`. Jest tests live in `tests/core/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/core/`.
 
 ## Build, Test, and Development Commands
 
@@ -31,3 +31,16 @@ Pull requests should include a short summary, test results (`npm test`, `npm run
 Do not edit `dist/` by hand; update `src/core/` and rebuild. Preserve public exports and existing ESM import style unless the package configuration changes too.
 
 `Board.encode()` is intentionally compact for Thai checkers: valid boards contain at most 16 pieces total, so 32 occupancy bits plus 16 color bits and 16 type bits are sufficient. Do not treat the 64-bit layout as lossy unless code starts supporting non-game boards with more than 16 pieces.
+
+## CaptureTrace
+
+`CaptureTrace` (exported from `Legals.ts`) is a standalone immutable object that preserves the full capture path through a multi-jump sequence. It is separate from `Move.captured` so the flat captured-pieces list stays backward compatible.
+
+- `trace.sequence` — `[captured₁, landing₁, …, finalLanding]` — the raw alternating sequence
+- `trace.captured` — just the captured pieces (even indices)
+- `trace.path(from)` — `[from, landing₁, …, finalLanding]` — the piece's travel path
+- `trace.length` — number of captures
+- `trace.finalLanding` — last element (same as `move.to`)
+- `trace.toString()` — human-readable, e.g. `"×C6 →D5 ×E4 →F3"`
+
+The trace is threaded from `Explorer` → `Legals` (`captureSequence` in `MoveInfo`) → `Game.#toMove()` → `Move.trace`. `copyMoveInfo` and `copyMove` preserve it through defensive copies. Tests cover construction, immutability, path computation, `toString`, and integration with `Game.getMoves()` / `Game.copy()`.

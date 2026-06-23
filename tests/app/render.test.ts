@@ -1,4 +1,6 @@
-import { Board, Game } from '../../src/index.js';
+import { describe, expect, test } from '@jest/globals';
+
+import { Board, Game, Position, PieceColor, PieceType } from '../../src/index.js';
 import { formatMove, renderGame } from '../../src/app/render.js';
 
 describe('formatMove', () => {
@@ -6,6 +8,23 @@ describe('formatMove', () => {
     const game = new Game();
     const move = game.getMoves()[0];
     expect(formatMove(move)).toMatch(/^[A-H][1-8] -> [A-H][1-8]$/);
+  });
+
+  test('renders a capture move with trace notation', () => {
+    // White pion at C4, black pion at B3 — single capture: C4→A2 ×B3 →A2
+    const pieces = new Map([
+      [Position.fromString('C4'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+    const moves = game.getMoves();
+    const captureMove = moves.find(m => m.trace);
+    expect(captureMove).toBeDefined();
+
+    const formatted = formatMove(captureMove!);
+    expect(formatted).toContain('×B3');
+    expect(formatted).toContain('→A2');
+    expect(formatted).toMatch(/^C4 -> A2 ×B3 →A2$/);
   });
 });
 

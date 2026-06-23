@@ -1,23 +1,31 @@
 /** @jest-environment jsdom */
 
+import { beforeEach, describe, expect, test } from '@jest/globals';
+
 import { PieceColor, PieceType } from '../../dist/index.js';
 
-// @ts-expect-error - browser core is plain JavaScript
+// @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
-// @ts-expect-error - browser model is plain JavaScript
+// @ts-ignore - browser model is plain JavaScript
 import { MatchStore } from '../../html/js/model/MatchStore.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { BoardView } from '../../html/js/view/BoardView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { HistoryView } from '../../html/js/view/HistoryView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { StatsView } from '../../html/js/view/StatsView.js';
-// @ts-expect-error - browser view is plain JavaScript
+// @ts-ignore - browser view is plain JavaScript
 import { StatusView } from '../../html/js/view/StatusView.js';
+// @ts-expect-error - browser i18n is plain JavaScript
+import { createI18n } from '../../html/js/i18n/i18n.js';
 
 function newStore() {
   return new MatchStore(new EventBus());
 }
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('BoardView', () => {
   test('renders an 8x8 grid and forwards dark-square activation', () => {
@@ -108,6 +116,7 @@ describe('HistoryView', () => {
             captured: [],
           },
           mover: PieceColor.WHITE,
+          promoted: false,
           isCurrent: true,
         },
       ],
@@ -115,6 +124,54 @@ describe('HistoryView', () => {
     new HistoryView(listEl, { matchStore: store }).render();
 
     expect(listEl.querySelector('.h-capture')).toBeNull();
+  });
+
+  test('references the external crown SVG for promotion moves', () => {
+    const listEl = document.createElement('div');
+    const store = {
+      historyEntries: () => [
+        {
+          index: 1,
+          move: {
+            from: { toString: () => 'B2' },
+            to: { toString: () => 'A1' },
+            captured: [],
+          },
+          mover: PieceColor.WHITE,
+          promoted: true,
+          isCurrent: true,
+        },
+      ],
+    };
+    new HistoryView(listEl, { matchStore: store }).render();
+
+    const use = listEl.querySelector('.h-promotion use');
+    expect(use).not.toBeNull();
+    expect(use!.getAttribute('href')).toBe('svg/crown.svg#icon');
+  });
+
+  test('renders both capture and promotion badges when both happen in one move', () => {
+    const listEl = document.createElement('div');
+    const store = {
+      historyEntries: () => [
+        {
+          index: 1,
+          move: {
+            from: { toString: () => 'C4' },
+            to: { toString: () => 'A2' },
+            captured: [{}],
+          },
+          mover: PieceColor.WHITE,
+          promoted: true,
+          isCurrent: true,
+        },
+      ],
+    };
+    new HistoryView(listEl, { matchStore: store }).render();
+
+    expect(listEl.querySelector('.h-capture')).not.toBeNull();
+    expect(listEl.querySelector('.h-promotion')).not.toBeNull();
+    expect(listEl.querySelector('.h-flags')).not.toBeNull();
   });
 });
 
@@ -171,7 +228,7 @@ describe('StatusView', () => {
 
     view.render({ isAnimating: false });
     expect(els.cardP1.className).toBe('player-card active-p1');
-    expect(els.turnAnnouncement.textContent).toBe('ตาของผู้เล่น 1');
+    expect(els.turnAnnouncement.textContent).toBe('ตาของผู้เล่นมาคอว์');
     expect(els.btnUndo.disabled).toBe(true);
 
     store.commit(0);
@@ -190,6 +247,22 @@ describe('StatusView', () => {
 
     view.resetAnnouncement();
     view.render({ isAnimating: false });
-    expect(els.turnAnnouncement.textContent).toBe('ตาของผู้เล่น 1');
+    expect(els.turnAnnouncement.textContent).toBe('ตาของผู้เล่นมาคอว์');
+  });
+
+  test('uses the injected locale for announcements', () => {
+    const store = newStore();
+    const els = {
+      cardP1: document.createElement('div'),
+      cardP2: document.createElement('div'),
+      turnAnnouncement: document.createElement('div'),
+      btnUndo: document.createElement('button'),
+      btnRedo: document.createElement('button'),
+    };
+    const view = new StatusView({ matchStore: store, ...els, i18n: createI18n('en') });
+
+    view.render();
+
+    expect(els.turnAnnouncement.textContent).toBe("Macaw player's turn");
   });
 });

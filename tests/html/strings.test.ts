@@ -1,18 +1,22 @@
+import { describe, expect, test } from '@jest/globals';
+
 import { Game, PieceColor, PieceType } from '../../dist/index.js';
-// @ts-expect-error - browser util is plain JavaScript
+// @ts-ignore - browser util is plain JavaScript
 import { htmlToPos, posToHtml, isDarkSquare, BOARD_SIZE } from '../../html/js/util/coords.js';
 import {
   playerLabel,
   pieceTypeLabel,
   squareLabel,
   capturedSummary,
-  // @ts-expect-error - browser util is plain JavaScript
+  // @ts-ignore - browser util is plain JavaScript
 } from '../../html/js/util/strings.th.js';
+// @ts-expect-error - browser i18n is plain JavaScript
+import { createI18n } from '../../html/js/i18n/i18n.js';
 
 describe('strings.th', () => {
   test('playerLabel names each side', () => {
-    expect(playerLabel(PieceColor.WHITE)).toBe('ผู้เล่น 1');
-    expect(playerLabel(PieceColor.BLACK)).toBe('ผู้เล่น 2');
+    expect(playerLabel(PieceColor.WHITE)).toBe('ผู้เล่นมาคอว์');
+    expect(playerLabel(PieceColor.BLACK)).toBe('ผู้เล่นกระตั้ว');
   });
 
   test('pieceTypeLabel distinguishes dame from pion', () => {
@@ -86,15 +90,35 @@ describe('strings.th', () => {
   });
 
   test('capturedSummary covers none, single type, and mixed types', () => {
-    expect(capturedSummary('ผู้เล่น 1', [])).toBe('ผู้เล่น 1 ยังไม่ได้กินหมาก');
+    expect(capturedSummary('ผู้เล่นมาคอว์', [])).toBe('ผู้เล่นมาคอว์ ยังไม่ได้กินหมาก');
     expect(
-      capturedSummary('ผู้เล่น 1', [{ color: PieceColor.BLACK, type: PieceType.PION }]),
-    ).toBe('ผู้เล่น 1 กินหมากของผู้เล่น 2: หมากธรรมดา 1 ตัว');
+      capturedSummary('ผู้เล่นมาคอว์', [{ color: PieceColor.BLACK, type: PieceType.PION }]),
+    ).toBe('ผู้เล่นมาคอว์ กินหมากของผู้เล่นกระตั้ว: หมากธรรมดา 1 ตัว');
     expect(
-      capturedSummary('ผู้เล่น 2', [
+      capturedSummary('ผู้เล่นกระตั้ว', [
         { color: PieceColor.WHITE, type: PieceType.PION },
         { color: PieceColor.WHITE, type: PieceType.DAME },
       ]),
-    ).toBe('ผู้เล่น 2 กินหมากของผู้เล่น 1: หมากธรรมดา 1 ตัว และ ฮอส 1 ตัว');
+    ).toBe('ผู้เล่นกระตั้ว กินหมากของผู้เล่นมาคอว์: หมากธรรมดา 1 ตัว และ ฮอส 1 ตัว');
+  });
+});
+
+describe('i18n', () => {
+  test('normalizes supported locales and falls back to Thai', () => {
+    expect(createI18n('en-US').locale()).toBe('en');
+    expect(createI18n('en-US').t('status.gameOver')).toBe('Game over');
+    expect(createI18n('fr').locale()).toBe('th');
+    expect(createI18n('fr').t('status.gameOver')).toBe('เกมจบแล้ว');
+  });
+
+  test('builds English domain labels and captured-piece summaries', () => {
+    const english = createI18n('en');
+    expect(english.playerLabel(PieceColor.WHITE)).toBe('Macaw player');
+    expect(
+      english.capturedSummary('Macaw player', [
+        { color: PieceColor.BLACK, type: PieceType.PION },
+        { color: PieceColor.BLACK, type: PieceType.PION },
+      ]),
+    ).toBe('Macaw player captured from Cockatoo player: 2 regular pieces');
   });
 });

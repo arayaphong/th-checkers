@@ -1,3 +1,4 @@
+import { describe, expect, test } from '@jest/globals';
 import { Game } from '../../src/core/Game.js';
 import { PieceColor } from '../../src/core/Piece.js';
 

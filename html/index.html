@@ -1,121 +1,119 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>เกมส์หมากฮอส - Thai Checkers</title>
 
-<link rel="stylesheet" href="style.css">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="app.title"></title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header>
-  <div id="game-status">
-    <div class="player-card" id="card-p1">ผู้เล่น 1 <span class="icon-p1">🔴</span></div>
-    <div class="player-card" id="card-p2">ผู้เล่น 2 ⚫</div>
-    <span id="turn-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-  </div>
-</header>
-
-<div
-  id="too-small-overlay"
-  role="alertdialog"
-  aria-modal="true"
-  aria-labelledby="too-small-title"
-  aria-describedby="too-small-desc"
-  aria-hidden="true"
-  tabindex="-1"
-  style="
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: var(--bg-color);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  gap: 12px;
-  text-align: center;
-  padding: 20px;
-">
-  <svg width="48" height="48" fill="#f1c40f" aria-hidden="true" focusable="false">
-    <use href="svg/warning.svg#icon"></use>
-  </svg>
-  <p id="too-small-title" style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color);">แสดงผลไม่ได้</p>
-  <p id="too-small-desc" style="font-size: 0.85rem; color: #aaa;">พื้นที่แสดงผลเล็กเกินไป<br>กรุณาขยายหน้าต่างให้ใหญ่ขึ้น</p>
-</div>
-
-<!-- ป๊อบอัพจบเกม -->
-<div id="game-over-overlay" aria-hidden="true">
-  <div
-    class="game-over-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="winner-title"
-    aria-describedby="winner-desc"
-  >
-    <h2 id="winner-title" class="game-over-title">ผู้เล่น 1 ชนะ!</h2>
-    <p id="winner-desc" class="game-over-desc">ฝ่ายตรงข้ามไม่มีหมากเหลือให้เดิน</p>
-    <div class="game-over-actions">
-      <button id="btn-review-game" class="btn-review-game">ดูกระดาน</button>
-      <button id="btn-play-again" class="btn-play-again">เล่นใหม่อีกครั้ง</button>
+  <header>
+    <div id="game-status">
+      <div class="player-card" id="card-p1"><img src="png/macaw_128px.png" data-i18n-alt="players.whiteIcon"
+          class="icon-p1"> <span data-i18n="players.white"></span></div>
+      <div class="player-card" id="card-p2"><img src="png/cockatoo_128px.png" data-i18n-alt="players.blackIcon"
+          class="icon-p2"> <span data-i18n="players.black"></span></div>
+      <span id="turn-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
     </div>
-  </div>
-</div>
-
-<section>
-  <div id="stars-bg" class="stars-bg"></div>
-
-  <!-- ส่วนกระดาน (Board) -->
-  <div class="board-container">
-    <div class="board-wrapper">
-      <div class="board-col-labels">
-        <span>A</span><span>B</span><span>C</span><span>D</span>
-        <span>E</span><span>F</span><span>G</span><span>H</span>
-      </div>
-      <div class="board-row-labels">
-        <span>1</span><span>2</span><span>3</span><span>4</span>
-        <span>5</span><span>6</span><span>7</span><span>8</span>
-      </div>
-      <div class="board" id="board" role="grid" aria-label="กระดานหมากฮอส" aria-rowcount="8" aria-colcount="8">
-        <!-- ช่องตารางจะถูกสร้างด้วย JavaScript -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ส่วนควบคุม (Control) -->
-  <div class="controls">
-    <div id="stats-panel">
-      <div class="stats-row">
-        <span class="stats-label">ผู้เล่น 1</span>
-        <div class="captured-list" id="captured-by-p1"></div>
-      </div>
-      <hr class="stats-divider">
-      <div class="stats-row">
-        <span class="stats-label">ผู้เล่น 2</span>
-        <div class="captured-list" id="captured-by-p2"></div>
-      </div>
-    </div>
-    <ul>
-      <li><button id="btn-undo" title="ย้อนกลับ (Undo)" disabled>
-        <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><use href="svg/undo.svg#icon"></use></svg>
-      </button></li>
-      <li><button id="btn-redo" title="ทำซ้ำ (Redo)" disabled>
-        <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><use href="svg/redo.svg#icon"></use></svg>
-      </button></li>
-      <li><button id="btn-reset" class="btn-reset" title="เริ่มเกมใหม่ (Reset)">
-        <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><use href="svg/reset.svg#icon"></use></svg>
-      </button></li>
+    <ul class="settings-row">
+      <li><button id="btn-sound" type="button" data-i18n-title="app.controls.soundOff">🔊</button></li>
+      <li><button id="btn-language" type="button" data-i18n-title="app.controls.language">EN</button></li>
     </ul>
-    <div id="history-stack">
-      <div class="history-label" id="history-label">ประวัติการเดิน</div>
-      <div id="history-list-wrapper">
-        <div id="history-list" role="list" aria-labelledby="history-label"></div>
+  </header>
+
+  <div id="too-small-overlay" role="alertdialog" aria-modal="true" aria-labelledby="too-small-title"
+    aria-describedby="too-small-desc" aria-hidden="true" tabindex="-1">
+    <svg width="48" height="48" fill="#f1c40f" aria-hidden="true" focusable="false">
+      <use href="svg/warning.svg#icon"></use>
+    </svg>
+    <p id="too-small-title" data-i18n="app.viewport.title"></p>
+    <p id="too-small-desc"><span data-i18n="app.viewport.descriptionLine1"></span><br><span
+        data-i18n="app.viewport.descriptionLine2"></span></p>
+  </div>
+
+  <section>
+    <div id="stars-bg" class="stars-bg"></div>
+
+    <!-- Board section -->
+    <div class="board-container">
+      <div class="board-wrapper">
+        <div class="board-col-labels">
+          <span>A</span><span>B</span><span>C</span><span>D</span>
+          <span>E</span><span>F</span><span>G</span><span>H</span>
+        </div>
+        <div class="board-row-labels">
+          <span>1</span><span>2</span><span>3</span><span>4</span>
+          <span>5</span><span>6</span><span>7</span><span>8</span>
+        </div>
+        <div class="board" id="board" role="grid" data-i18n-aria-label="app.boardLabel" aria-rowcount="8"
+          aria-colcount="8">
+          <!-- Squares generated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls section -->
+    <div class="controls">
+      <div id="stats-panel">
+        <div class="stats-row">
+          <span class="stats-label">🔴 <span data-i18n="players.white"></span></span>
+          <div class="captured-list" id="captured-by-p1"></div>
+        </div>
+        <hr class="stats-divider">
+        <div class="stats-row">
+          <span class="stats-label">⚫ <span data-i18n="players.black"></span></span>
+          <div class="captured-list" id="captured-by-p2"></div>
+        </div>
+      </div>
+      <ul>
+        <li><button id="btn-undo" data-i18n-title="app.controls.undo" disabled>
+            <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+              <use href="svg/undo.svg#icon"></use>
+            </svg>
+          </button></li>
+        <li><button id="btn-redo" data-i18n-title="app.controls.redo" disabled>
+            <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+              <use href="svg/redo.svg#icon"></use>
+            </svg>
+          </button></li>
+        <li><button id="btn-reset" class="btn-reset" data-i18n-title="app.controls.reset">
+            <svg width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+              <use href="svg/reset.svg#icon"></use>
+            </svg>
+          </button></li>
+      </ul>
+      <div id="history-stack">
+        <div class="history-label" id="history-label" data-i18n="app.historyLabel"></div>
+        <div id="history-list-wrapper">
+          <div id="history-list" role="list" aria-labelledby="history-label"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Game-over popup (outside <section> so section.inert does not disable these buttons) -->
+  <div id="game-over-overlay" aria-hidden="true">
+    <div class="game-over-modal" role="dialog" aria-modal="true" aria-labelledby="winner-title"
+      aria-describedby="winner-desc">
+      <div id="game-over-fireworks" class="game-over-fireworks" aria-hidden="true"></div>
+      <div class="game-over-content">
+        <h2 id="winner-title" class="game-over-title"><span data-i18n="gameOver.initialTitle"
+            class="winner-text"></span> <img src="png/macaw_128px.png" data-i18n-alt="players.whiteIcon"
+            class="winner-icon"></h2>
+        <p id="winner-desc" class="game-over-desc" data-i18n="gameOver.initialDescription"></p>
+        <div class="game-over-actions">
+          <button id="btn-review-game" class="btn-review-game" data-i18n="app.controls.review"></button>
+          <button id="btn-play-again" class="btn-play-again" data-i18n="app.controls.playAgain"></button>
+        </div>
       </div>
     </div>
   </div>
-</section>
 
-<script type="module" src="game.js"></script>
+  <script type="module" src="game.js"></script>
 </body>
+
 </html>

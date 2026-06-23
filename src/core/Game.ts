@@ -3,21 +3,28 @@
 import { PieceColor, pieceSymbol } from './Piece.js';
 import { Position } from './Position.js';
 import { Board } from './Board.js';
-import { Legals, type MoveInfo } from './Legals.js';
+import { Legals, type MoveInfo, CaptureTrace } from './Legals.js';
 import { Explorer } from './Explorer.js';
 
 export interface Move {
   from: Position;
   to: Position;
   captured: Position[];
+  /** Full capture trace, present only for capture moves.
+   *  `trace.sequence` holds [captured₁, landing₁, …, finalLanding]. */
+  trace?: CaptureTrace;
 }
 
 function copyMove(move: Move): Move {
-  return {
+  const m: Move = {
     from: move.from,
     to: move.to,
     captured: [...move.captured],
   };
+  if (move.trace) {
+    m.trace = new CaptureTrace(move.trace.sequence);
+  }
+  return m;
 }
 
 export function boardToString(board: Board): string {
@@ -200,7 +207,15 @@ export class Game {
   }
 
   #toMove(from: Position, info: MoveInfo): Move {
-    return { from, to: info.targetPosition, captured: [...info.capturedPositions] };
+    const move: Move = {
+      from,
+      to: info.targetPosition,
+      captured: [...info.capturedPositions],
+    };
+    if (info.captureSequence && info.captureSequence.length > 0) {
+      move.trace = new CaptureTrace(info.captureSequence);
+    }
+    return move;
   }
 
   #computeMoveCountFast(): number {
@@ -244,23 +259,9 @@ export class Game {
   }
 
   #buildMoveAtIndex(index: number): Move {
-    this.#updateMoveableCache();
-    const hasCaptures = this.#hasMandatoryCapture();
-
-    let cumulative = 0;
-    for (const pos of this.#sortedPositionsCache) {
-      const legals = this.#moveableCache.get(pos)!;
-
-      if (hasCaptures && !legals.hasCaptured()) continue;
-
-      const size = legals.size();
-      if (index < cumulative + size) {
-        return this.#toMove(pos, legals.getMoveInfo(index - cumulative));
-      }
-      cumulative += size;
-    }
-
-    throw new RangeError(`Move index ${index} out of range`);
+    // selectMove() already called #assertValidMoveIndex, which triggered
+    // #updateChoicesCache() — so #choicesCache is fresh here.
+    return copyMove(this.#choicesCache[index]);
   }
 
   // ─── Debug ───
@@ -273,7 +274,11 @@ export class Game {
     const moves = this.getMoves();
     console.log(`Moves (${moves.length}):`);
     for (const m of moves) {
-      const capStr = m.captured.length > 0 ? ` captures ${m.captured.map(c => c.toString()).join(',')}` : '';
+      const capStr = m.trace
+        ? ` ${m.trace.toString()}`
+        : m.captured.length > 0
+          ? ` captures ${m.captured.map(c => c.toString()).join(',')}`
+          : '';
       console.log(`  ${m.from.toString()} -> ${m.to.toString()}${capStr}`);
     }
   }

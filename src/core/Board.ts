@@ -43,6 +43,7 @@ function toPieceKey(position: PiecePosition): PieceKey {
   if (position instanceof Position) {
     return position.hash();
   }
+  // Validate the raw index — throws if out of range, result is intentionally discarded.
   Position.fromIndex(position);
   return position;
 }
@@ -182,16 +183,24 @@ export class Board {
 
   promotePiece(pos: Position): Board {
     const mask = bit(pos.hash());
-    if ((this.#occBits & mask) === 0) return this;
-    if ((this.#dameBits & mask) !== 0) return this;
+    if ((this.#occBits & mask) === 0) {
+      throw new Error(`Cannot promote: no piece at ${pos.toString()}`);
+    }
+    if ((this.#dameBits & mask) !== 0) {
+      throw new Error(`Cannot promote: piece at ${pos.toString()} is already a dame`);
+    }
     return new Board(this.#occBits, this.#blackBits, this.#dameBits | mask);
   }
 
   movePiece(from: Position, to: Position): Board {
     const fm = bit(from.hash());
     const tm = bit(to.hash());
-    if ((this.#occBits & fm) === 0) return this;
-    if ((this.#occBits & tm) !== 0) return this;
+    if ((this.#occBits & fm) === 0) {
+      throw new Error(`Cannot move: no piece at ${from.toString()}`);
+    }
+    if ((this.#occBits & tm) !== 0) {
+      throw new Error(`Cannot move: destination ${to.toString()} is occupied`);
+    }
 
     const wasBlack = (this.#blackBits & fm) !== 0;
     const wasDame = (this.#dameBits & fm) !== 0;
@@ -208,7 +217,9 @@ export class Board {
 
   removePiece(pos: Position): Board {
     const mask = bit(pos.hash());
-    if ((this.#occBits & mask) === 0) return this;
+    if ((this.#occBits & mask) === 0) {
+      throw new Error(`Cannot remove: no piece at ${pos.toString()}`);
+    }
     return new Board(
       this.#occBits & ~mask,
       this.#blackBits & ~mask,

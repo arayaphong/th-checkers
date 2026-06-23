@@ -5,6 +5,7 @@
 import { PieceColor } from '../../../dist/index.js';
 import { htmlToPos, posToHtml } from '../util/coords.js';
 import { Events } from '../core/events.js';
+import { i18n as defaultI18n } from '../i18n/i18n.js';
 
 export class GameController {
   #bus;
@@ -18,6 +19,7 @@ export class GameController {
   #gameOverView;
   #focusManager;
   #controls;
+  #i18n;
 
   constructor({
     bus,
@@ -31,6 +33,7 @@ export class GameController {
     gameOverView,
     focusManager,
     controls,
+    i18n = defaultI18n,
   }) {
     this.#bus = bus;
     this.#matchStore = matchStore;
@@ -43,6 +46,7 @@ export class GameController {
     this.#gameOverView = gameOverView;
     this.#focusManager = focusManager;
     this.#controls = controls;
+    this.#i18n = i18n;
   }
 
   // Subscribe to match changes and attach the control event handlers.
@@ -53,11 +57,24 @@ export class GameController {
 
   // Start a fresh game (also used as the reset/play-again action).
   newGame() {
+    this.#bus.emit(Events.SOUND_WIN_STOP);
     this.#focusManager.hideGameOver({ restoreFocus: false });
     this.#selection.clear();
     this.#boardView.resetFocus();
     this.#statusView.resetAnnouncement();
     this.#matchStore.reset(); // emits match:changed -> render
+  }
+
+  // Re-render every view after a locale change so dynamic text is translated.
+  refresh() {
+    this.#statusView.resetAnnouncement();
+    this.#gameOverView.refresh();
+    this.#render();
+    if (this.#matchStore.isGameOver() && this.#gameOverView.isOpen()) {
+      const current = this.#matchStore.game().player();
+      const winner = current === PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+      this.#focusManager.showGameOver(winner, this.#gameOverReason());
+    }
   }
 
   // Board input: select a piece, play a legal move, or clear the selection.
@@ -132,10 +149,17 @@ export class GameController {
     if (!this.#matchStore.isGameOver()) return;
     const current = this.#matchStore.game().player();
     const winner = current === PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+    this.#bus.emit(Events.SOUND_PLAY, 'win');
+    this.#focusManager.showGameOver(winner, this.#gameOverReason());
+  }
+
+  #gameOverReason() {
+    const current = this.#matchStore.game().player();
     const board = this.#matchStore.game().board();
     const hasPieces = board.getPieces(current).size > 0;
-    const reason = hasPieces ? 'ไม่มีตาให้เดินต่อได้' : 'ถูกกินหมากจนหมดกระดาน';
-    this.#focusManager.showGameOver(winner, reason);
+    return this.#i18n.t(
+      hasPieces ? 'gameOver.reasons.noMoves' : 'gameOver.reasons.noPieces',
+    );
   }
 
   #undo() {
@@ -172,6 +196,18 @@ export class GameController {
   #wireControls() {
     const { btnUndo, btnRedo, btnReset, btnPlayAgain, btnReview } = this.#controls;
 
+    // Guard: ensure buttons exist before wiring
+    if (!btnUndo || !btnRedo || !btnReset || !btnPlayAgain || !btnReview) {
+      console.error('GameController: Missing button elements:', {
+        btnUndo: !!btnUndo,
+        btnRedo: !!btnRedo,
+        btnReset: !!btnReset,
+        btnPlayAgain: !!btnPlayAgain,
+        btnReview: !!btnReview,
+      });
+      return;
+    }
+
     btnUndo.addEventListener('click', () => {
       if (!this.#selection.isAnimating()) this.#undo();
     });
@@ -187,7 +223,10 @@ export class GameController {
         this.#focusManager.focusBoard();
       }
     });
-    btnReview.addEventListener('click', () => this.#focusManager.hideGameOver());
+    btnReview.addEventListener('click', () => {
+      this.#bus.emit(Events.SOUND_WIN_STOP);
+      this.#focusManager.hideGameOver();
+    });
 
     this.#gameOverView.element().addEventListener('click', (event) => {
       if (event.target === event.currentTarget) this.#focusManager.hideGameOver();

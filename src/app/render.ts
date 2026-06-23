@@ -4,10 +4,11 @@
 
 import { boardToString, PieceColor, toStringPieceColor, type Game, type Move } from '../index.js';
 
-/** Format one move as it appears in the numbered menu, e.g. "C3 -> D4 [x E5,G7]". */
+/** Format one move as it appears in the numbered menu, e.g. "C3 -> D4 ×E5 →D4 ×G7" for captures. */
 export function formatMove(move: Move): string {
-  const captures =
-    move.captured.length > 0
+  const captures = move.trace
+    ? ` ${move.trace.toString()}`
+    : move.captured.length > 0
       ? ` [x ${move.captured.map(c => c.toString()).join(',')}]`
       : '';
   return `${move.from.toString()} -> ${move.to.toString()}${captures}`;

@@ -1,3 +1,5 @@
+import { describe, expect, test } from '@jest/globals';
+
 import { Game, PieceColor } from '../../dist/index.js';
 import {
   BOARD_SIZE,
@@ -7,7 +9,7 @@ import {
   isDarkSquare,
   pieceColorClass,
   colorAt,
-  // @ts-expect-error - browser util is plain JavaScript
+  // @ts-ignore - browser util is plain JavaScript
 } from '../../html/js/util/coords.js';
 
 describe('coords', () => {
