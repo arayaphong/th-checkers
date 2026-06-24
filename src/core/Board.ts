@@ -198,6 +198,10 @@ export class Board {
     if ((this.#occBits & fm) === 0) {
       throw new Error(`Cannot move: no piece at ${from.toString()}`);
     }
+    // Loop-capture: piece returns to its origin square — no bitboard change needed.
+    if (from.equals(to)) {
+      return this;
+    }
     if ((this.#occBits & tm) !== 0) {
       throw new Error(`Cannot move: destination ${to.toString()} is occupied`);
     }

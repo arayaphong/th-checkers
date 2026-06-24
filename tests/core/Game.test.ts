@@ -326,9 +326,10 @@ describe('Game - Move struct functionality', () => {
     const from = Position.fromCoords(1, 2);
     const to = Position.fromCoords(3, 4);
     const captured = [Position.fromCoords(2, 3)];
-    const move1: Move = { from, to, captured };
-    const move2: Move = { from, to, captured: [...captured] };
-    const move3: Move = { from, to: Position.fromCoords(5, 6), captured };
+    const path = [from, to];
+    const move1: Move = { from, to, captured, path };
+    const move2: Move = { from, to, captured: [...captured], path: [...path] };
+    const move3: Move = { from, to: Position.fromCoords(5, 6), captured, path: [from, Position.fromCoords(5, 6)] };
 
     // move1 equals move2
     expect(move1.from.equals(move2.from)).toBe(true);
@@ -345,8 +346,8 @@ describe('Game - Move struct functionality', () => {
   test('Move capture detection', () => {
     const from = Position.fromCoords(1, 2);
     const to = Position.fromCoords(3, 4);
-    const nonCapture: Move = { from, to, captured: [] };
-    const capture: Move = { from, to, captured: [Position.fromCoords(2, 3)] };
+    const nonCapture: Move = { from, to, captured: [], path: [from, to] };
+    const capture: Move = { from, to, captured: [Position.fromCoords(2, 3)], path: [from, to] };
 
     expect(nonCapture.captured.length).toBe(0);
     expect(capture.captured.length).toBeGreaterThan(0);

@@ -24,7 +24,10 @@
   "homepage": "https://github.com/arayaphong/th-checkers#readme",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/app/index.js",
+    "start": "node run.js",
+    "demo": "npm run build && node dist/app/demo.js",
+    "demo:branching-capture": "npm run build && node dist/app/demo1.js",
+    "demo:loop-capture": "npm run build && node dist/app/demo2.js",
     "prepare": "npm run build",
     "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:dom": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand tests/html/game.test.ts",

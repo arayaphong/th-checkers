@@ -2,13 +2,17 @@
 
 ## Project Structure & Module Organization
 
-This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts` (also exports `CaptureTrace` and `MoveInfo`), `Piece.ts`, and `Position.ts`. Jest tests live in `tests/core/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/core/`.
+This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts` (also exports `CaptureTrace` and `MoveInfo`), `Piece.ts`, and `Position.ts`. The interactive REPL and demo scenarios live in `src/app/`. Jest tests live in `tests/core/` and `tests/app/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/`.
 
 ## Build, Test, and Development Commands
 
 - `npm install`: installs TypeScript, Jest, `ts-jest`, and type definitions.
-- `npm run build`: runs `tsc`, type-checks `src/core/`, and writes compiled files, declarations, and source maps to `dist/`.
-- `npm test`: runs Jest in ESM mode against `tests/core/**/*.test.ts`.
+- `npm run build`: runs `tsc`, type-checks `src/`, and writes compiled files, declarations, and source maps to `dist/`.
+- `npm test`: runs Jest in ESM mode against `tests/**/*.test.ts`.
+- `npm run repl` / `npm run demo`: starts the interactive REPL with a standard board.
+- `npm run demo:branching-capture`: starts the REPL pre-loaded with a branching-capture position.
+- `npm run demo:loop-capture`: starts the REPL pre-loaded with a dame loop-capture position.
+- Inside the REPL, `trace <number>` or `trace <from> <to>` prints the full intermediate path of a move.
 
 There is no local dev server; development is edit, build, and test.
 
@@ -18,7 +22,7 @@ Use TypeScript ES modules and include `.js` extensions in relative imports, matc
 
 ## Testing Guidelines
 
-Tests use Jest with `ts-jest/presets/default-esm`. Place new tests under `tests/core/` as `Feature.test.ts`, and group behavior with `describe(...)` blocks. Cover board encoding/decoding, move legality, turn changes, captures, promotion, and undo behavior when touched. Run `npm test` before submitting changes; run `npm run build` when changing exported APIs or TypeScript configuration.
+Tests use Jest with `ts-jest/presets/default-esm`. Place new tests under `tests/core/` for game logic or `tests/app/` for REPL behavior, using `Feature.test.ts` names, and group behavior with `describe(...)` blocks. Cover board encoding/decoding, move legality, turn changes, captures, promotion, and undo behavior when touched. Add parser/render tests when changing REPL input or output. Run `npm test` before submitting changes; run `npm run build` when changing exported APIs or TypeScript configuration.
 
 ## Commit & Pull Request Guidelines
 

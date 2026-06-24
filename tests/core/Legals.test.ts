@@ -18,6 +18,11 @@ describe('Legals - index validation', () => {
     expect(() => legals.getPosition(1)).toThrow(RangeError);
   });
 
+  test('regular move path is the target square', () => {
+    const legals = new Legals([Position.fromString('B1')]);
+    expect(legals.getMoveInfo(0).path.map(pos => pos.toString())).toEqual(['B1']);
+  });
+
   test('getMoveInfo rejects invalid indexes', () => {
     const legals = new Legals([Position.fromString('B1')]);
 
@@ -102,6 +107,7 @@ describe('Legals - capture sequence validation', () => {
 
     expect(legals.getPosition(0).equals(Position.fromString('E4'))).toBe(true);
     expect(legals.getCapturePieces(0).map(pos => pos.toString())).toEqual(['B3', 'D3']);
+    expect(legals.getMoveInfo(0).path.map(pos => pos.toString())).toEqual(['A2', 'E4']);
   });
 });
 

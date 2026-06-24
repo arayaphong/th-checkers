@@ -9,6 +9,8 @@ describe('parseInput - commands', () => {
     expect(parseInput('new')).toEqual({ kind: 'command', name: 'new' });
     expect(parseInput('reset')).toEqual({ kind: 'command', name: 'new' });
     expect(parseInput('moves')).toEqual({ kind: 'command', name: 'moves' });
+    expect(parseInput('demo1')).toEqual({ kind: 'command', name: 'demo1' });
+    expect(parseInput('demo2')).toEqual({ kind: 'command', name: 'demo2' });
     expect(parseInput('help')).toEqual({ kind: 'command', name: 'help' });
     expect(parseInput('quit')).toEqual({ kind: 'command', name: 'quit' });
     expect(parseInput('exit')).toEqual({ kind: 'command', name: 'quit' });
@@ -57,6 +59,31 @@ describe('parseInput - coordinates', () => {
   test('rejects coordinates that land on a light square', () => {
     // A1 matches the [A-H][1-8] shape but is not a playable black square.
     expect(parseInput('a1 b2').kind).toBe('error');
+  });
+});
+
+describe('parseInput - trace', () => {
+  test('parses trace by move number', () => {
+    const result = parseInput('trace 3');
+    expect(result).toEqual({ kind: 'trace', index: 3 });
+  });
+
+  test('parses trace by coordinates', () => {
+    const result = parseInput('trace d5 d1');
+    expect(result.kind).toBe('trace');
+    if (result.kind === 'trace') {
+      expect(result.from!.toString()).toBe('D5');
+      expect(result.to!.toString()).toBe('D1');
+    }
+  });
+
+  test('rejects bare trace', () => {
+    expect(parseInput('trace').kind).toBe('error');
+  });
+
+  test('rejects trace with bad coordinates', () => {
+    expect(parseInput('trace d5').kind).toBe('error');
+    expect(parseInput('trace d5 x1').kind).toBe('error');
   });
 });
 

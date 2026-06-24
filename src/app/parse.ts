@@ -4,12 +4,13 @@
 
 import { Position } from '../index.js';
 
-export type CommandName = 'undo' | 'redo' | 'new' | 'help' | 'moves' | 'quit';
+export type CommandName = 'undo' | 'redo' | 'new' | 'help' | 'moves' | 'demo1' | 'demo2' | 'quit';
 
 export type ParsedInput =
   | { kind: 'command'; name: CommandName }
   | { kind: 'index'; value: number }
   | { kind: 'coords'; from: Position; to: Position }
+  | { kind: 'trace'; index?: number; from?: Position; to?: Position }
   | { kind: 'empty' }
   | { kind: 'error'; message: string };
 
@@ -26,6 +27,8 @@ const COMMAND_ALIASES: Record<string, CommandName> = {
   '?': 'help',
   moves: 'moves',
   m: 'moves',
+  demo1: 'demo1',
+  demo2: 'demo2',
   quit: 'quit',
   exit: 'quit',
   q: 'quit',
@@ -51,6 +54,25 @@ export function parseInput(raw: string): ParsedInput {
       return { kind: 'error', message: 'Move number must be 1 or greater.' };
     }
     return { kind: 'index', value };
+  }
+
+  // Trace: "trace <number>" or "trace <from> <to>"
+  if (lower.startsWith('trace')) {
+    const rest = trimmed.slice(5).trim();
+    if (/^\d+$/.test(rest)) {
+      return { kind: 'trace', index: Number(rest) };
+    }
+    const tokens = rest.split(/[\s,-]+/).filter(t => t.length > 0);
+    if (tokens.length === 2 && tokens.every(t => COORD.test(t))) {
+      try {
+        const from = Position.fromString(tokens[0].toUpperCase());
+        const to = Position.fromString(tokens[1].toUpperCase());
+        return { kind: 'trace', from, to };
+      } catch (err) {
+        return { kind: 'error', message: (err as Error).message };
+      }
+    }
+    return { kind: 'error', message: 'Usage: trace <number> or trace <from> <to>' };
   }
 
   // Coordinates: two squares separated by space, '-' or ','.

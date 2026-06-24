@@ -5,6 +5,8 @@ import { Position } from './Position.js';
 export interface MoveInfo {
   targetPosition: Position;
   capturedPositions: Position[];
+  /** Landing squares the moving piece visits, excluding its starting square. */
+  path: Position[];
   /** Raw capture sequence, present only for capture moves.
    *  Format: [captured1, landing1, captured2, landing2, …, finalLanding]. */
   captureSequence?: CaptureSequence;
@@ -95,6 +97,7 @@ function copyMoveInfo(move: MoveInfo): MoveInfo {
   const copy: MoveInfo = {
     targetPosition: move.targetPosition,
     capturedPositions: [...move.capturedPositions],
+    path: [...move.path],
   };
   if (move.captureSequence) {
     copy.captureSequence = [...move.captureSequence];
@@ -122,12 +125,15 @@ function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
   const typed = seq as readonly Position[];
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
+  const path: Position[] = [];
   for (let i = 0; i < typed.length; i += 2) {
     captured.push(typed[i]);
+    path.push(typed[i + 1]);
   }
   return {
     targetPosition: typed.at(-1) as Position, // last element = final landing
     capturedPositions: captured,
+    path,
     captureSequence: [...typed],
   };
 }
@@ -163,6 +169,7 @@ export class Legals {
         return {
           targetPosition: item,
           capturedPositions: [],
+          path: [item],
         };
       });
     }

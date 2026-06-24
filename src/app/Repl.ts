@@ -11,12 +11,16 @@ import { createInterface, type Interface } from 'node:readline';
 import { stdin, stdout } from 'node:process';
 
 import { Game, type Position } from '../index.js';
+import { createDemo1Game, explainDemo1 } from './demo1.js';
+import { createDemo2Game, explainDemo2 } from './demo2.js';
 import { parseInput, type CommandName } from './parse.js';
-import { formatMove, renderGame } from './render.js';
+import { formatMove, formatTrace, renderGame } from './render.js';
 
 const HELP = `Commands:
   <number>        apply the move with that menu number
   <from> <to>     apply a move by coordinates, e.g. "b3 c4" or "b3-c4"
+  trace <n>       show the full path of move #n
+  trace <f> <t>   show all paths from f to t
   undo  | u       take back the last move
   redo  | r       re-apply a move undone with 'undo'
   new   | reset   start a fresh game
@@ -25,15 +29,16 @@ const HELP = `Commands:
   quit  | q       exit`;
 
 export class Repl {
-  #game = new Game();
+  #game: Game;
   /** Move indices that were undone, newest last; consumed by 'redo'. */
   #redoStack: number[] = [];
   /** When set, the next input line picks among these move indices (disambiguation). */
   #pendingPick: number[] | null = null;
   #rl: Interface;
 
-  constructor(input: NodeJS.ReadableStream = stdin, output: NodeJS.WritableStream = stdout) {
+  constructor(input: NodeJS.ReadableStream = stdin, output: NodeJS.WritableStream = stdout, game?: Game) {
     this.#rl = createInterface({ input, output });
+    this.#game = game ?? new Game();
   }
 
   async run(): Promise<void> {
@@ -75,6 +80,9 @@ export class Repl {
       case 'coords':
         this.#applyCoords(parsed.from, parsed.to);
         return false;
+      case 'trace':
+        this.#trace(parsed);
+        return false;
       case 'error':
         this.#print(parsed.message);
         return false;
@@ -98,6 +106,18 @@ export class Repl {
       case 'new':
         this.#game = new Game();
         this.#redoStack = [];
+        this.#print(renderGame(this.#game));
+        break;
+      case 'demo1':
+        this.#game = createDemo1Game();
+        this.#redoStack = [];
+        this.#print(explainDemo1());
+        this.#print(renderGame(this.#game));
+        break;
+      case 'demo2':
+        this.#game = createDemo2Game();
+        this.#redoStack = [];
+        this.#print(explainDemo2());
         this.#print(renderGame(this.#game));
         break;
       case 'quit':
@@ -134,6 +154,34 @@ export class Repl {
     this.#print(`Multiple moves match ${from.toString()} -> ${to.toString()}:`);
     matches.forEach((idx, n) => this.#print(`  ${n + 1}) ${formatMove(moves[idx])}`));
     this.#pendingPick = matches;
+  }
+
+  #trace(parsed: { index?: number; from?: Position; to?: Position }): void {
+    const moves = this.#game.getMoves();
+
+    if (parsed.index !== undefined) {
+      const value = parsed.index;
+      if (value < 1 || value > moves.length) {
+        this.#print(`No move #${value}. There are ${moves.length} legal move(s).`);
+        return;
+      }
+      this.#print(formatTrace(moves[value - 1]));
+      return;
+    }
+
+    const from = parsed.from!;
+    const to = parsed.to!;
+    const matches = moves.filter(m => m.from.equals(from) && m.to.equals(to));
+
+    if (matches.length === 0) {
+      this.#print(`No legal move from ${from.toString()} to ${to.toString()}.`);
+      return;
+    }
+
+    this.#print(`Trace(s) for ${from.toString()} -> ${to.toString()}:`);
+    matches.forEach((m, i) => {
+      this.#print(`  ${i + 1}) ${formatTrace(m)}`);
+    });
   }
 
   /** Resolve a pending disambiguation pick from the user's input line. */

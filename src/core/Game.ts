@@ -10,6 +10,8 @@ export interface Move {
   from: Position;
   to: Position;
   captured: Position[];
+  /** Full sequence of squares the piece visits, including from and to. */
+  path: Position[];
   /** Full capture trace, present only for capture moves.
    *  `trace.sequence` holds [captured₁, landing₁, …, finalLanding]. */
   trace?: CaptureTrace;
@@ -20,6 +22,7 @@ function copyMove(move: Move): Move {
     from: move.from,
     to: move.to,
     captured: [...move.captured],
+    path: [...move.path],
   };
   if (move.trace) {
     m.trace = new CaptureTrace(move.trace.sequence);
@@ -211,6 +214,7 @@ export class Game {
       from,
       to: info.targetPosition,
       captured: [...info.capturedPositions],
+      path: [from, ...info.path],
     };
     if (info.captureSequence && info.captureSequence.length > 0) {
       move.trace = new CaptureTrace(info.captureSequence);
