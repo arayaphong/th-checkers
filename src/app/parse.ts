@@ -10,7 +10,8 @@ export type ParsedInput =
   | { kind: 'command'; name: CommandName }
   | { kind: 'index'; value: number }
   | { kind: 'coords'; from: Position; to: Position }
-  | { kind: 'trace'; index?: number; from?: Position; to?: Position }
+  | { kind: 'trace-index'; index: number }
+  | { kind: 'trace-coords'; from: Position; to: Position }
   | { kind: 'empty' }
   | { kind: 'error'; message: string };
 
@@ -59,17 +60,17 @@ export function parseInput(raw: string): ParsedInput {
   }
 
   // Trace: "trace <number>" or "trace <from> <to>"
-  if (lower.startsWith('trace')) {
+  if (lower === 'trace' || lower.startsWith('trace ')) {
     const rest = trimmed.slice(5).trim();
     if (/^\d+$/.test(rest)) {
-      return { kind: 'trace', index: Number(rest) };
+      return { kind: 'trace-index', index: Number(rest) };
     }
     const tokens = rest.split(/[\s,-]+/).filter(t => t.length > 0);
     if (tokens.length === 2 && tokens.every(t => COORD.test(t))) {
       try {
         const from = Position.fromString(tokens[0].toUpperCase());
         const to = Position.fromString(tokens[1].toUpperCase());
-        return { kind: 'trace', from, to };
+        return { kind: 'trace-coords', from, to };
       } catch (err) {
         return { kind: 'error', message: (err as Error).message };
       }

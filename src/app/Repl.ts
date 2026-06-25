@@ -19,16 +19,22 @@ import { parseInput, type CommandName } from './parse.js';
 import { formatMove, formatTrace, renderGame } from './render.js';
 
 const HELP = `Commands:
-  <number>        apply the move with that menu number
-  <from> <to>     apply a move by coordinates, e.g. "b3 c4" or "b3-c4"
-  trace <n>       show the full path of move #n
-  trace <f> <t>   show all paths from f to t
-  undo  | u       take back the last move
-  redo  | r       re-apply a move undone with 'undo'
-  new   | reset   start a fresh game
-  moves | m       re-print the board and move menu
-  help  | h | ?   show this help
-  quit  | q       exit`;
+  <number>          apply the move with that menu number
+  <from> <to>       apply a move by coordinates, e.g. "b3 c4" or "b3-c4"
+  trace <n>         show the full path of move #n
+  trace <f> <t>     show all paths from f to t
+  undo  | u         take back the last move
+  redo  | r         re-apply a move undone with 'undo'
+  new   | reset | n  start a fresh game
+  moves | m         re-print the board and move menu
+  help  | h | ?     show this help
+  quit  | q | exit  exit
+
+Demos (load a preset position):
+  demo1             branching chain capture, same final landing
+  demo2             dame loop capture ending on the original square
+  demo31            dame loop capture with two mirror-image paths
+  demo32            dame loop capture with extra central branching`;
 
 export class Repl {
   #game: Game;
@@ -84,8 +90,11 @@ export class Repl {
       case 'coords':
         this.#applyCoords(parsed.from, parsed.to);
         return false;
-      case 'trace':
-        this.#trace(parsed);
+      case 'trace-index':
+        this.#traceIndex(parsed.index);
+        return false;
+      case 'trace-coords':
+        this.#traceCoords(parsed.from, parsed.to);
         return false;
       case 'error':
         this.#print(parsed.message);
@@ -182,21 +191,17 @@ export class Repl {
     this.#pendingPick = matches;
   }
 
-  #trace(parsed: { index?: number; from?: Position; to?: Position }): void {
+  #traceIndex(value: number): void {
     const moves = this.#game.getMoves();
-
-    if (parsed.index !== undefined) {
-      const value = parsed.index;
-      if (value < 1 || value > moves.length) {
-        this.#print(`No move #${value}. There are ${moves.length} legal move(s).`);
-        return;
-      }
-      this.#print(formatTrace(moves[value - 1]));
+    if (value < 1 || value > moves.length) {
+      this.#print(`No move #${value}. There are ${moves.length} legal move(s).`);
       return;
     }
+    this.#print(formatTrace(moves[value - 1]));
+  }
 
-    const from = parsed.from!;
-    const to = parsed.to!;
+  #traceCoords(from: Position, to: Position): void {
+    const moves = this.#game.getMoves();
     const matches = moves.filter(m => m.from.equals(from) && m.to.equals(to));
 
     if (matches.length === 0) {

@@ -67,15 +67,15 @@ describe('parseInput - coordinates', () => {
 describe('parseInput - trace', () => {
   test('parses trace by move number', () => {
     const result = parseInput('trace 3');
-    expect(result).toEqual({ kind: 'trace', index: 3 });
+    expect(result).toEqual({ kind: 'trace-index', index: 3 });
   });
 
   test('parses trace by coordinates', () => {
     const result = parseInput('trace d5 d1');
-    expect(result.kind).toBe('trace');
-    if (result.kind === 'trace') {
-      expect(result.from!.toString()).toBe('D5');
-      expect(result.to!.toString()).toBe('D1');
+    expect(result.kind).toBe('trace-coords');
+    if (result.kind === 'trace-coords') {
+      expect(result.from.toString()).toBe('D5');
+      expect(result.to.toString()).toBe('D1');
     }
   });
 
