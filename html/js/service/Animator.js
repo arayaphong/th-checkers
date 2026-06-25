@@ -94,6 +94,8 @@ export class Animator {
     animateLeg(0);
   }
 
+  /** @param {number} r */
+  /** @param {number} c */
   #square(r, c) {
     return document.querySelector(`.square[data-r="${r}"][data-c="${c}"]`);
   }
