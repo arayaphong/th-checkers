@@ -23,15 +23,6 @@ export function formatTrace(move: Move): string {
   return `${move.path.map(p => p.toString()).join(' -> ')}${captures}`;
 }
 
-/** Format the full trace/path of a move, e.g. "D5 -> B3 -> D1 [x C4,C2]". */
-export function formatTrace(move: Move): string {
-  const captures =
-    move.captured.length > 0
-      ? ` [x ${move.captured.map(c => c.toString()).join(',')}]`
-      : '';
-  return `${move.path.map(p => p.toString()).join(' -> ')}${captures}`;
-}
-
 /** Render the full display: board, status line and numbered move menu (or game-over). */
 export function renderGame(game: Game): string {
   const moves = game.getMoves();

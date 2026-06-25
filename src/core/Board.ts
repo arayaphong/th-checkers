@@ -13,9 +13,12 @@ const BOARD_SQUARES = 32;
 const MAX_PIECES = 16;
 const MAX_ENCODED = (1n << 64n) - 1n;
 
-/** 1 << idx as unsigned 32-bit integer */
+/** 1 << idx as unsigned 32-bit integer. `idx` must be a board square index (0..31). */
 function bit(idx: number): number {
-  return (1 << (idx & 0x1f)) >>> 0;
+  if (idx < 0 || idx >= BOARD_SQUARES) {
+    throw new RangeError(`Bit index out of range: ${idx}`);
+  }
+  return (1 << idx) >>> 0;
 }
 
 function popCount32(value: number): number {

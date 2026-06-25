@@ -12,6 +12,8 @@ export interface Move {
   captured: Position[];
   /** Full sequence of squares the piece visits, including from and to. */
   path: Position[];
+  /** Full capture trace for capture moves. */
+  trace?: CaptureTrace;
 }
 
 function copyMove(move: Move): Move {
@@ -55,6 +57,9 @@ export function boardToString(board: Board): string {
   return result;
 }
 
+/** Sentinel passed to the Game constructor to build a bare shell (used by Game.copy). */
+const BLANK_GAME = Symbol('blank-game');
+
 export class Game {
   #boardHistory: Board[] = [];
   #encodedHistory: bigint[] = [];
@@ -64,25 +69,28 @@ export class Game {
   #choicesDirty = true;
   #choicesCache: Move[] = [];
   #moveableDirty = true;
-  #moveableCache: Map<Position, Legals> = new Map();
+  // Keyed by Position.hash() (0..31), not the Position object — Positions are not
+  // interned, so equal positions are distinct objects and unsafe as Map keys.
+  #moveableCache: Map<number, Legals> = new Map();
   #moveCountCache = 0;
   #sortedPositionsCache: Position[] = [];
 
   // ─── Constructors ───
 
   constructor(board?: Board) {
+    if ((board as unknown) === BLANK_GAME) return; // bare shell — Game.copy fills the histories
     const initial = board ?? Board.setup();
     this.#boardHistory.push(initial);
     this.#encodedHistory.push(initial.encode());
   }
 
   static copy(other: Game): Game {
-    const g = new Game();
+    // Bare shell skips the Board.setup()/encode() a normal constructor would do
+    // and then immediately discard. A fresh instance already starts dirty.
+    const g = new Game(BLANK_GAME as unknown as Board);
     g.#boardHistory = other.#boardHistory.map(b => Board.copy(b));
     g.#encodedHistory = [...other.#encodedHistory];
     g.#indexHistory = [...other.#indexHistory];
-    g.#choicesDirty = true;
-    g.#moveableDirty = true;
     return g;
   }
 
@@ -91,8 +99,8 @@ export class Game {
   selectMove(index: number): void {
     this.#assertValidMoveIndex(index);
     const move = this.#buildMoveAtIndex(index);
-    this.#indexHistory.push(index);
     this.#executeMove(move);
+    this.#indexHistory.push(index);
   }
 
   undoMove(): void {
@@ -140,13 +148,26 @@ export class Game {
 
   #executeMove(move: Move): void {
     const current = this.board();
+    let next = current;
 
-    // Move piece
-    let next = current.movePiece(move.from, move.to);
-
-    // Remove captured pieces
-    for (const cap of move.captured) {
-      next = next.removePiece(cap);
+    if (move.trace) {
+      let piecePosition = move.from;
+      for (let i = 0; i < move.trace.sequence.length; i += 2) {
+        const captured = move.trace.sequence[i];
+        const landing = move.trace.sequence[i + 1];
+        next = next.removePiece(captured).movePiece(piecePosition, landing);
+        piecePosition = landing;
+      }
+      if (!piecePosition.equals(move.to)) {
+        throw new Error(
+          `Capture trace final landing ${piecePosition.toString()} does not match move target ${move.to.toString()}`,
+        );
+      }
+    } else {
+      for (const cap of move.captured) {
+        next = next.removePiece(cap);
+      }
+      next = next.movePiece(move.from, move.to);
     }
 
     // Promotion check
@@ -184,13 +205,13 @@ export class Game {
     const board = this.board();
     const color = this.player();
     const pieces = board.getPieces(color);
+    const explorer = new Explorer(board);
 
     for (const [index] of pieces) {
       const pos = Position.fromIndex(index);
-      const explorer = new Explorer(board);
       const legals = explorer.findValidMoves(pos);
       if (!legals.empty()) {
-        this.#moveableCache.set(pos, legals);
+        this.#moveableCache.set(pos.hash(), legals);
         this.#sortedPositionsCache.push(pos);
       }
     }
@@ -207,12 +228,16 @@ export class Game {
   }
 
   #toMove(from: Position, info: MoveInfo): Move {
-    return {
+    const move: Move = {
       from,
       to: info.targetPosition,
       captured: [...info.capturedPositions],
       path: [from, ...info.path],
     };
+    if (info.captureSequence) {
+      move.trace = new CaptureTrace(info.captureSequence);
+    }
+    return move;
   }
 
   #computeMoveCountFast(): number {
@@ -230,7 +255,7 @@ export class Game {
     const hasCaptures = this.#hasMandatoryCapture();
 
     for (const pos of this.#sortedPositionsCache) {
-      const legals = this.#moveableCache.get(pos)!;
+      const legals = this.#moveableCache.get(pos.hash())!;
 
       // If captures exist anywhere, only include capture moves
       if (hasCaptures && !legals.hasCaptured()) continue;

@@ -128,11 +128,24 @@ export class GameController {
 
   #applyMove(moveIndex) {
     const move = this.#matchStore.game().getMoves()[moveIndex];
-    const from = posToHtml(move.from);
-    const to = posToHtml(move.to);
-    const captured = move.captured.map((p) => posToHtml(p));
 
-    this.#animator.move({ from, to, captured }, () => {
+    // For multi-jump captures, animate along each leg of the trace path so
+    // the piece visually follows its zig-zag route.  Simple moves fall back
+    // to the legacy { from, to, captured } shape.
+    let animMove;
+    if (move.trace) {
+      const path = move.trace.path(move.from).map((p) => posToHtml(p));
+      const capturedPerLeg = move.trace.captured.map((p) => [posToHtml(p)]);
+      animMove = { path, capturedPerLeg };
+    } else {
+      animMove = {
+        from: posToHtml(move.from),
+        to: posToHtml(move.to),
+        captured: move.captured.map((p) => posToHtml(p)),
+      };
+    }
+
+    this.#animator.move(animMove, () => {
       // Clear interaction state first so the commit-driven render reflects it.
       this.#selection.clear();
       this.#selection.setAnimating(false);

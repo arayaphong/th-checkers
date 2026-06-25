@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { Legals } from '../../src/core/Legals.js';
+import { Legals, CaptureTrace } from '../../src/core/Legals.js';
 import { Position } from '../../src/core/Position.js';
 
 describe('Legals - index validation', () => {
@@ -187,6 +187,20 @@ describe('CaptureTrace', () => {
 
   test('rejects odd-length sequence', () => {
     expect(() => new CaptureTrace([B3, A2, D3])).toThrow(/captured\/landing pairs/);
+  });
+
+  test('rejects non-Position captured entries', () => {
+    const sequence = [{} as Position, A2];
+
+    expect(() => new CaptureTrace(sequence)).toThrow(TypeError);
+    expect(() => new CaptureTrace(sequence)).toThrow(/CaptureTrace sequence item 0 must be a Position/);
+  });
+
+  test('rejects non-Position landing entries', () => {
+    const sequence = [B3, {} as Position];
+
+    expect(() => new CaptureTrace(sequence)).toThrow(TypeError);
+    expect(() => new CaptureTrace(sequence)).toThrow(/CaptureTrace sequence item 1 must be a Position/);
   });
 
   // ── sequence ──

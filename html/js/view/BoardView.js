@@ -2,7 +2,7 @@
 // owns keyboard/roving-tabindex focus within the grid. Square activations are
 // forwarded to the controller via the `onActivate` callback; all match and
 // selection state is supplied by the caller.
-import { BOARD_SIZE, htmlToPos, isDarkSquare, pieceColorClass } from '../util/coords.js';
+import { BOARD_SIZE, htmlToPos, isDarkSquare, pieceColorClass, posToHtml } from '../util/coords.js';
 import { PieceColor } from '../../../dist/index.js';
 import { i18n as defaultI18n } from '../i18n/i18n.js';
 
@@ -91,7 +91,12 @@ export class BoardView {
     square.tabIndex = this.#focusedSquare.r === r && this.#focusedSquare.c === c ? 0 : -1;
 
     if (isSelected) square.classList.add('selected');
-    if (validMoves.some((m) => m.r === r && m.c === c)) square.classList.add('valid-move');
+    const moveEntry = validMoves.find((m) => m.r === r && m.c === c);
+    if (moveEntry) {
+      square.classList.add('valid-move');
+      square.addEventListener('mouseenter', () => this.#onTargetHover(moveEntry.moveIndex));
+      square.addEventListener('mouseleave', () => this.#clearPathHighlight());
+    }
 
     if (dark && board.isOccupied(pos)) {
       square.appendChild(this.#renderPiece(board, pos, hasLegalMove));
@@ -168,5 +173,31 @@ export class BoardView {
 
   #squareAt(r, c) {
     return this.#boardEl.querySelector(`.square[data-r="${r}"][data-c="${c}"]`);
+  }
+
+  // Highlight the path from the selected piece to the hovered target.
+  #onTargetHover(moveIndex) {
+    const moves = this.#matchStore.game().getMoves();
+    const move = moves[moveIndex];
+    if (!move) return;
+
+    // For captures, the trace already has every position the piece touches:
+    // [from, cap₁, land₁, cap₂, land₂, …, finalLanding].
+    // For simple moves just highlight start and end.
+    const positions = move.trace
+      ? [move.from, ...move.trace.sequence]
+      : [move.from, move.to];
+
+    for (const pos of positions) {
+      const { r: pr, c: pc } = posToHtml(pos);
+      const sq = this.#squareAt(pr, pc);
+      if (sq) sq.classList.add('path-highlight');
+    }
+  }
+
+  #clearPathHighlight() {
+    this.#boardEl.querySelectorAll('.path-highlight').forEach((sq) => {
+      sq.classList.remove('path-highlight');
+    });
   }
 }

@@ -7,6 +7,8 @@ export interface MoveInfo {
   capturedPositions: Position[];
   /** Landing squares the moving piece visits, excluding its starting square. */
   path: Position[];
+  /** Raw alternating captured/landing sequence for capture moves. */
+  captureSequence?: Position[];
 }
 
 export type CaptureSequence = Position[];
@@ -31,6 +33,9 @@ export class CaptureTrace {
       throw new Error(
         `CaptureTrace requires captured/landing pairs, got ${sequence.length} element(s)`,
       );
+    }
+    for (let i = 0; i < sequence.length; i++) {
+      assertPosition(sequence[i], `CaptureTrace sequence item ${i}`);
     }
     this.#sequence = Object.freeze([...sequence]);
   }
@@ -123,14 +128,15 @@ function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
   const path: Position[] = [];
-  for (let i = 0; i < seq.length; i += 2) {
-    captured.push(seq[i]);
-    path.push(seq[i + 1]);
+  for (let i = 0; i < typed.length; i += 2) {
+    captured.push(typed[i]);
+    path.push(typed[i + 1]);
   }
   return {
     targetPosition: typed.at(-1) as Position, // last element = final landing
     capturedPositions: captured,
     path,
+    captureSequence: [...typed],
   };
 }
 

@@ -488,6 +488,10 @@ section {
   cursor: pointer;
 }
 
+.square.path-highlight {
+  background-image: linear-gradient(rgba(241,196,15,0.35), rgba(241,196,15,0.35));
+}
+
 /* ตัวหมาก — เม็ดหมากแบนทรงดิสก์ (flat token) มองจากด้านบน */
 .piece {
   width: 80%;

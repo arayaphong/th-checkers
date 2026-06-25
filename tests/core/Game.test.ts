@@ -2,7 +2,6 @@ import { describe, expect, test } from '@jest/globals';
 import { Game, Move, boardToString } from '../../src/core/Game.js';
 import { Board } from '../../src/core/Board.js';
 import { Position } from '../../src/core/Position.js';
-import { CaptureTrace } from '../../src/core/Legals.js';
 import { PieceColor, PieceType, type PieceInfo } from '../../src/core/Piece.js';
 
 const MAX_CONSECUTIVE_UNDOS = 4;
@@ -156,6 +155,35 @@ describe('Game - Move selection and execution', () => {
     } else {
       expect(game.player()).toBe(PieceColor.BLACK);
     }
+  });
+
+  test('Dame capture can finish on a square occupied before the sequence', () => {
+    const pieces: Map<Position, PieceInfo> = new Map([
+      [Position.fromString('B1'), { color: PieceColor.WHITE, type: PieceType.DAME }],
+      [Position.fromString('C2'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('B3'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('E4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('B5'), { color: PieceColor.BLACK, type: PieceType.PION }],
+      [Position.fromString('E6'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]);
+    const game = new Game(Board.fromPieces(pieces));
+    const moves = game.getMoves();
+    const moveIndex = moves.findIndex(
+      move => move.trace?.toString() === '×C2 →D3 ×E4 →F5 ×E6 →D7 ×B5 →A4 ×B3 →C2',
+    );
+
+    expect(moveIndex).toBeGreaterThanOrEqual(0);
+    expect(() => game.selectMove(moveIndex)).not.toThrow();
+
+    const landing = Position.fromString('C2');
+    const board = game.board();
+    expect(game.getMoveSequence()).toEqual([moveIndex]);
+    expect(game.player()).toBe(PieceColor.BLACK);
+    expect(board.getPieces(PieceColor.BLACK).size).toBe(0);
+    expect(board.isOccupied(Position.fromString('B1'))).toBe(false);
+    expect(board.isOccupied(landing)).toBe(true);
+    expect(board.isBlackPiece(landing)).toBe(false);
+    expect(board.isDamePiece(landing)).toBe(true);
   });
 });
 

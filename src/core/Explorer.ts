@@ -91,7 +91,7 @@ export class Explorer {
         }
 
         const rec = this.#findCapturesFrom(
-          sim, cap[1], color, isDame || becameDame, [...path, cap],
+          sim, cap[1], color, isDame, [...path, cap],
         );
         if (rec.length > 0) results.push(...rec);
         else results.push(this.#flatten(path, cap));
