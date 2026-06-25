@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { beforeAll, describe, expect, test } from '@jest/globals';
+import { beforeAll, describe, expect, jest, test } from '@jest/globals';
 
 // @ts-ignore - browser core is plain JavaScript
 import { EventBus } from '../../html/js/core/EventBus.js';
@@ -31,7 +31,7 @@ import { GameController } from '../../html/js/controller/GameController.js';
 // @ts-ignore - browser util is plain JavaScript
 import { posToHtml } from '../../html/js/util/coords.js';
 
-function harness() {
+function harness({ stateLoader }: { stateLoader?: any } = {}) {
   document.body.innerHTML = `
     <section></section>
     <div id="board"></div>
@@ -46,6 +46,8 @@ function harness() {
     <button id="btn-reset"></button>
     <button id="btn-play-again"></button>
     <button id="btn-review-game"></button>
+    <button id="btn-load-state"></button>
+    <input type="file" id="file-load-state">
     <div id="game-over-overlay" style="display:none">
       <div class="game-over-modal">
         <h2 id="winner-title"></h2>
@@ -105,7 +107,10 @@ function harness() {
       btnReset: get('btn-reset'),
       btnPlayAgain: get('btn-play-again'),
       btnReview: get('btn-review-game'),
+      btnLoadState: get('btn-load-state'),
+      fileLoadState: get('file-load-state'),
     },
+    stateLoader,
   });
 
   controller.start();
@@ -165,5 +170,40 @@ describe('GameController', () => {
     expect(document.querySelectorAll('.history-entry')).toHaveLength(1);
     expect(document.querySelectorAll('.history-entry.future')).toHaveLength(1);
     expect((document.getElementById('btn-redo') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  test('loading a state file resets to the loaded position', async () => {
+    const { Game, Board, PieceColor, PieceType, Position } = await import('../../dist/index.js');
+    const customGame = new Game(Board.fromPieces([
+      [Position.fromString('D5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]));
+
+    const fakeLoader = {
+      load: jest.fn<() => Promise<{ game: any }>>().mockResolvedValue({ game: customGame }),
+    };
+
+    const { controller, matchStore } = harness({ stateLoader: fakeLoader });
+    controller.newGame();
+    const { from, to } = firstMoveCoords(matchStore);
+    controller.activateSquare(from.r, from.c);
+    controller.activateSquare(to.r, to.c);
+    expect(matchStore.index()).toBeGreaterThan(0);
+
+    const fileInput = document.getElementById('file-load-state') as HTMLInputElement;
+    const file = { name: 'demo.json', type: 'application/json' };
+    Object.defineProperty(fileInput, 'files', {
+      configurable: true,
+      value: [file],
+    });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(fakeLoader.load).toHaveBeenCalledWith(file);
+    expect(matchStore.index()).toBe(0);
+    expect(matchStore.game().board().getPieces(PieceColor.WHITE).size).toBe(1);
+    expect(matchStore.game().board().getPieces(PieceColor.BLACK).size).toBe(1);
+    expect(document.querySelectorAll('.history-entry')).toHaveLength(0);
   });
 });

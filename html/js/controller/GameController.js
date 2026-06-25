@@ -19,6 +19,7 @@ export class GameController {
   #gameOverView;
   #focusManager;
   #controls;
+  #stateLoader;
   #i18n;
 
   constructor({
@@ -33,6 +34,7 @@ export class GameController {
     gameOverView,
     focusManager,
     controls,
+    stateLoader,
     i18n = defaultI18n,
   }) {
     this.#bus = bus;
@@ -46,6 +48,7 @@ export class GameController {
     this.#gameOverView = gameOverView;
     this.#focusManager = focusManager;
     this.#controls = controls;
+    this.#stateLoader = stateLoader;
     this.#i18n = i18n;
   }
 
@@ -206,8 +209,27 @@ export class GameController {
     });
   }
 
+  async #loadState(file) {
+    if (!file || this.#selection.isAnimating()) return;
+
+    try {
+      const { game } = await this.#stateLoader.load(file);
+      this.#bus.emit(Events.SOUND_WIN_STOP);
+      this.#focusManager.hideGameOver({ restoreFocus: false });
+      this.#selection.clear();
+      this.#boardView.resetFocus();
+      this.#statusView.resetAnnouncement();
+      this.#matchStore.loadCustomGame(game);
+    } catch (err) {
+      const key = err?.message ?? 'unknown';
+      const message = this.#i18n.t(`loadState.errors.${key}`) ?? this.#i18n.t('loadState.errors.unknown');
+      window.alert(`${this.#i18n.t('loadState.errorTitle')}\n${message}`);
+    }
+  }
+
   #wireControls() {
-    const { btnUndo, btnRedo, btnReset, btnPlayAgain, btnReview } = this.#controls;
+    const { btnUndo, btnRedo, btnReset, btnPlayAgain, btnReview, btnLoadState, fileLoadState } =
+      this.#controls;
 
     // Guard: ensure buttons exist before wiring
     if (!btnUndo || !btnRedo || !btnReset || !btnPlayAgain || !btnReview) {
@@ -240,6 +262,20 @@ export class GameController {
       this.#bus.emit(Events.SOUND_WIN_STOP);
       this.#focusManager.hideGameOver();
     });
+
+    if (btnLoadState && fileLoadState) {
+      btnLoadState.addEventListener('click', () => {
+        if (!this.#selection.isAnimating()) fileLoadState.click();
+      });
+      fileLoadState.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          this.#loadState(file);
+        }
+        // Reset the input so the same file can be selected again.
+        event.target.value = '';
+      });
+    }
 
     this.#gameOverView.element().addEventListener('click', (event) => {
       if (event.target === event.currentTarget) this.#focusManager.hideGameOver();

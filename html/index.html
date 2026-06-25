@@ -21,8 +21,10 @@
     </div>
     <ul class="settings-row">
       <li><button id="btn-sound" type="button" data-i18n-title="app.controls.soundOff">🔊</button></li>
+      <li><button id="btn-load-state" type="button" data-i18n-title="app.controls.loadState">📂</button></li>
       <li><button id="btn-language" type="button" data-i18n-title="app.controls.language">EN</button></li>
     </ul>
+    <input type="file" id="file-load-state" accept=".json,application/json" hidden>
   </header>
 
   <div id="too-small-overlay" role="alertdialog" aria-modal="true" aria-labelledby="too-small-title"

@@ -11,6 +11,7 @@ export const en = {
       playAgain: 'Play again',
       soundOn: 'Sound on',
       soundOff: 'Sound off',
+      loadState: 'Load position from file',
       language: 'Switch language',
     },
     viewport: {
@@ -55,6 +56,19 @@ export const en = {
     noneCaptured: ({ capturer }) => `${capturer} has not captured any pieces`,
     captured: ({ capturer, owner, counts }) =>
       `${capturer} captured from ${owner}: ${counts.join(' and ')}`,
+  },
+  loadState: {
+    errorTitle: 'Could not load position',
+    errors: {
+      invalidJson: 'The file is not valid JSON.',
+      unsupportedVersion: 'Unsupported file version.',
+      invalidPieces: 'Missing or invalid "pieces" object.',
+      invalidCoordinate: 'Invalid board coordinate.',
+      invalidPiece: 'Invalid piece color or type.',
+      duplicateCoordinate: 'Duplicate coordinate.',
+      tooManyPieces: 'Too many pieces (maximum 16).',
+      unknown: 'Failed to load the file.',
+    },
   },
   gameOver: {
     initialTitle: 'Macaw player wins!',

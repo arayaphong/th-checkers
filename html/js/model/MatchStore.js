@@ -1,12 +1,12 @@
 // Source of truth for the match: the snapshot history, the move that produced
 // each snapshot, the current position, and last-move presentation metadata.
 // Mutating commands emit `match:changed`; views render from the store.
-import { Game, PieceColor, PieceType } from '../../../dist/index.js';
+import { Board, Game, PieceColor, PieceType } from '../../../dist/index.js';
 import { Events } from '../core/events.js';
 import { colorAt } from '../util/coords.js';
 
 export class MatchStore {
-  static STORAGE_KEY = 'th-checkers:match:v1';
+  static STORAGE_KEY = 'th-checkers:match:v2';
 
   #bus;
   #history; // history[0] is the initial position
@@ -17,12 +17,12 @@ export class MatchStore {
   #lastMove; // { move, mover } of the most recent commit
   #lastPromotion; // whether that commit promoted a piece
 
-  constructor(bus) {
+  constructor(bus, { initialGame } = {}) {
     this.#bus = bus;
-    this.#init({ restoreSnapshot: true });
+    this.#init({ restoreSnapshot: true, initialGame });
   }
 
-  #init({ restoreSnapshot }) {
+  #init({ restoreSnapshot, initialGame }) {
     const restored = restoreSnapshot ? this.#restore() : null;
     if (restored) {
       this.#history = restored.history;
@@ -38,7 +38,8 @@ export class MatchStore {
       return;
     }
 
-    this.#history = [new Game()];
+    const initial = initialGame ?? new Game();
+    this.#history = [initial];
     this.#moves = [null];
     this.#moveIndexes = [];
     this.#index = 0;
@@ -131,6 +132,18 @@ export class MatchStore {
     this.#emit();
   }
 
+  // Replace the current match with a new initial game and start fresh.
+  loadCustomGame(game) {
+    this.#history = [game];
+    this.#moves = [null];
+    this.#moveIndexes = [];
+    this.#index = 0;
+    this.#game = Game.copy(game);
+    this.#lastMove = null;
+    this.#lastPromotion = false;
+    this.#emit();
+  }
+
   // Commit the chosen legal move, recording it in history. Returns the
   // committed move plus whether it promoted a piece (for sound/animation).
   commit(moveIndex) {
@@ -191,7 +204,8 @@ export class MatchStore {
       ? snapshot.moveIndexes.filter((index) => Number.isInteger(index) && index >= 0)
       : [];
 
-    const history = [new Game()];
+    const initialGame = this.#decodeInitialBoard(snapshot.initialBoard);
+    const history = [initialGame];
     const moves = [null];
     let game = Game.copy(history[0]);
 
@@ -218,13 +232,29 @@ export class MatchStore {
     };
   }
 
+  #decodeInitialBoard(raw) {
+    if (typeof raw !== 'string' || raw === '') {
+      return new Game();
+    }
+    try {
+      const encoded = BigInt(raw);
+      const board = Board.decode(encoded);
+      return new Game(board);
+    } catch {
+      // Fall back to the standard setup if the stored board is corrupt.
+      return new Game();
+    }
+  }
+
   #persist() {
     if (typeof localStorage === 'undefined') return;
     try {
+      const initialBoard = this.#history[0].board().encode();
       localStorage.setItem(
         MatchStore.STORAGE_KEY,
         JSON.stringify({
-          version: 1,
+          version: 2,
+          initialBoard: initialBoard.toString(),
           moveIndexes: this.#moveIndexes,
           index: this.#index,
         }),
@@ -240,7 +270,7 @@ export class MatchStore {
       const raw = localStorage.getItem(MatchStore.STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed || parsed.version !== 1) return null;
+      if (!parsed || (parsed.version !== 1 && parsed.version !== 2)) return null;
       return parsed;
     } catch {
       this.#clearSnapshot();

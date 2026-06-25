@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "pieces": {
+    "D5": { "color": "white", "type": "pion" },
+    "C4": { "color": "black", "type": "pion" },
+    "E4": { "color": "black", "type": "pion" },
+    "C2": { "color": "black", "type": "pion" },
+    "E2": { "color": "black", "type": "pion" }
+  }
+}

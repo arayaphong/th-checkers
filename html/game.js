@@ -8,6 +8,7 @@ import { ViewportStore } from './js/model/ViewportStore.js';
 import { AudioService } from './js/service/AudioService.js';
 import { Animator } from './js/service/Animator.js';
 import { Starfield } from './js/service/Starfield.js';
+import { StateLoader } from './js/service/StateLoader.js';
 import { FocusManager } from './js/service/FocusManager.js';
 import { BoardView } from './js/view/BoardView.js';
 import { HistoryView } from './js/view/HistoryView.js';
@@ -108,7 +109,10 @@ controller = new GameController({
     btnReset: document.getElementById('btn-reset'),
     btnPlayAgain: document.getElementById('btn-play-again'),
     btnReview: document.getElementById('btn-review-game'),
+    btnLoadState: document.getElementById('btn-load-state'),
+    fileLoadState: document.getElementById('file-load-state'),
   },
+  stateLoader: new StateLoader(),
 });
 controller.start();
 

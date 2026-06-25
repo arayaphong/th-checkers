@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
+import { Board, Game, PieceColor, PieceType, Position } from '../../dist/index.js';
 // @ts-ignore - browser core is plain JavaScript
 import { Events } from '../../html/js/core/events.js';
 // @ts-ignore - browser core is plain JavaScript
@@ -152,7 +153,7 @@ describe('MatchStore', () => {
     }
   });
 
-  test('persists move indexes and current index after changes', () => {
+  test('persists v2 snapshot including initial board after changes', () => {
     const fake = withFakeStorage();
 
     try {
@@ -164,7 +165,83 @@ describe('MatchStore', () => {
       const raw = fake.storage.getItem(MatchStore.STORAGE_KEY);
       expect(raw).toBeTruthy();
       const parsed = JSON.parse(raw as string);
-      expect(parsed).toEqual({ version: 1, moveIndexes: [0, 0], index: 1 });
+      expect(parsed.version).toBe(2);
+      expect(parsed.moveIndexes).toEqual([0, 0]);
+      expect(parsed.index).toBe(1);
+      expect(typeof parsed.initialBoard).toBe('string');
+      expect(parsed.initialBoard).toBe(new Game().board().encode().toString());
+    } finally {
+      fake.restore();
+    }
+  });
+
+  test('accepts a custom initial game in the constructor', () => {
+    const custom = new Game(Board.fromPieces([
+      [Position.fromString('D5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]));
+
+    const bus = new EventBus();
+    const store = new MatchStore(bus, { initialGame: custom });
+
+    expect(store.index()).toBe(0);
+    expect(store.game().board().getPieces(PieceColor.WHITE).size).toBe(1);
+    expect(store.game().board().getPieces(PieceColor.BLACK).size).toBe(1);
+  });
+
+  test('loadCustomGame resets history and starts from the loaded position', () => {
+    const { store, changes } = newStore();
+    store.commit(0);
+    expect(store.index()).toBe(1);
+
+    const custom = new Game(Board.fromPieces([
+      [Position.fromString('D5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]));
+
+    const before = changes();
+    store.loadCustomGame(custom);
+
+    expect(store.index()).toBe(0);
+    expect(store.canUndo()).toBe(false);
+    expect(store.canRedo()).toBe(false);
+    expect(store.historyEntries()).toEqual([]);
+    expect(store.game().board().getPieces(PieceColor.WHITE).size).toBe(1);
+    expect(store.game().board().getPieces(PieceColor.BLACK).size).toBe(1);
+    expect(changes()).toBe(before + 1);
+  });
+
+  test('reset returns to the standard setup after a custom game was loaded', () => {
+    const custom = new Game(Board.fromPieces([
+      [Position.fromString('D5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+    ]));
+
+    const { store } = newStore();
+    store.loadCustomGame(custom);
+    expect(store.game().board().getPieces(PieceColor.WHITE).size).toBe(1);
+
+    store.reset();
+    expect(store.game().board().getPieces(PieceColor.WHITE).size).toBe(8);
+    expect(store.game().board().getPieces(PieceColor.BLACK).size).toBe(8);
+  });
+
+  test('v2 snapshot round-trips a custom initial board', () => {
+    const custom = new Game(Board.fromPieces([
+      [Position.fromString('D5'), { color: PieceColor.WHITE, type: PieceType.PION }],
+      [Position.fromString('C4'), { color: PieceColor.BLACK, type: PieceType.PION }],
+    ]));
+
+    const fake = withFakeStorage();
+    try {
+      const bus = new EventBus();
+      const store = new MatchStore(bus, { initialGame: custom });
+      store.commit(0);
+
+      const restored = new MatchStore(bus);
+      expect(restored.index()).toBe(1);
+      // The only white piece captured the only black piece on the first move.
+      expect(restored.game().board().getPieces(PieceColor.WHITE).size).toBe(1);
+      expect(restored.game().board().getPieces(PieceColor.BLACK).size).toBe(0);
     } finally {
       fake.restore();
     }

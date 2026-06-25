@@ -11,6 +11,7 @@ export const th = {
       playAgain: 'เริ่มใหม่',
       soundOn: 'เปิดเสียง',
       soundOff: 'ปิดเสียง',
+      loadState: 'โหลดตำแหน่งจากไฟล์',
       language: 'เปลี่ยนภาษา',
     },
     viewport: {
@@ -54,6 +55,19 @@ export const th = {
     noneCaptured: ({ capturer }) => `${capturer} ยังไม่ได้กินหมาก`,
     captured: ({ capturer, owner, counts }) =>
       `${capturer} กินหมากของ${owner}: ${counts.join(' และ ')}`,
+  },
+  loadState: {
+    errorTitle: 'โหลดตำแหน่งไม่ได้',
+    errors: {
+      invalidJson: 'ไฟล์ไม่ใช่ JSON ที่ถูกต้อง',
+      unsupportedVersion: 'เวอร์ชันไฟล์ไม่รองรับ',
+      invalidPieces: 'ข้อมูล "pieces" ไม่ถูกต้องหรือไม่มี',
+      invalidCoordinate: 'พิกัดบนกระดานไม่ถูกต้อง',
+      invalidPiece: 'สีหรือชนิดหมากไม่ถูกต้อง',
+      duplicateCoordinate: 'พิกัดซ้ำกัน',
+      tooManyPieces: 'หมากมากเกินไป (สูงสุด 16 ตัว)',
+      unknown: 'โหลดไฟล์ไม่สำเร็จ',
+    },
   },
   gameOver: {
     initialTitle: 'ผู้เล่นมาคอว์ ชนะ!',
