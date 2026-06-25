@@ -4,7 +4,7 @@
 
 import { Position } from '../index.js';
 
-export type CommandName = 'undo' | 'redo' | 'new' | 'help' | 'moves' | 'demo1' | 'demo2' | 'quit';
+export type CommandName = 'undo' | 'redo' | 'new' | 'help' | 'moves' | 'demo1' | 'demo2' | 'demo31' | 'demo32' | 'quit';
 
 export type ParsedInput =
   | { kind: 'command'; name: CommandName }
@@ -29,6 +29,8 @@ const COMMAND_ALIASES: Record<string, CommandName> = {
   m: 'moves',
   demo1: 'demo1',
   demo2: 'demo2',
+  demo31: 'demo31',
+  demo32: 'demo32',
   quit: 'quit',
   exit: 'quit',
   q: 'quit',

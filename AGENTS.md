@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts` (also exports `CaptureTrace` and `MoveInfo`), `Piece.ts`, and `Position.ts`. The interactive REPL and demo scenarios live in `src/app/`. Jest tests live in `tests/core/` and `tests/app/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/`.
+This is a small TypeScript library for Thai checkers game logic. Source files live in `src/core/`, with one main class or concept per module: `Board.ts`, `Game.ts`, `Explorer.ts`, `Legals.ts`, `Piece.ts`, and `Position.ts`. The interactive REPL and demo scenarios live in `src/app/`. Jest tests live in `tests/core/` and `tests/app/` and use `*.test.ts` names. Build output is emitted to `dist/`; treat it as generated from `src/`.
 
 ## Build, Test, and Development Commands
 
@@ -12,7 +12,10 @@ This is a small TypeScript library for Thai checkers game logic. Source files li
 - `npm run repl` / `npm run demo`: starts the interactive REPL with a standard board.
 - `npm run demo:branching-capture`: starts the REPL pre-loaded with a branching-capture position.
 - `npm run demo:loop-capture`: starts the REPL pre-loaded with a dame loop-capture position.
+- `npm run demo:loop-branching-capture1`: starts the REPL pre-loaded with a dame loop-capture position that has two mirror-image loop paths.
+- `npm run demo:loop-branching-capture2`: starts the REPL pre-loaded with the same ring plus a central piece, creating extra branches.
 - Inside the REPL, `trace <number>` or `trace <from> <to>` prints the full intermediate path of a move.
+- Inside the REPL, typing `<from> <to>` (e.g. `d1 d1`) applies the move directly when all matching moves capture the same pieces; otherwise the REPL prompts for a choice.
 
 There is no local dev server; development is edit, build, and test.
 

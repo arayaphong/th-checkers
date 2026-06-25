@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { beforeEach, describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 
 import { PieceColor, PieceType } from '../../dist/index.js';
 

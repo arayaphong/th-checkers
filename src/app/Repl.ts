@@ -13,6 +13,8 @@ import { stdin, stdout } from 'node:process';
 import { Game, type Position } from '../index.js';
 import { createDemo1Game, explainDemo1 } from './demo1.js';
 import { createDemo2Game, explainDemo2 } from './demo2.js';
+import { createDemo31Game, explainDemo31 } from './demo31.js';
+import { createDemo32Game, explainDemo32 } from './demo32.js';
 import { parseInput, type CommandName } from './parse.js';
 import { formatMove, formatTrace, renderGame } from './render.js';
 
@@ -35,9 +37,11 @@ export class Repl {
   /** When set, the next input line picks among these move indices (disambiguation). */
   #pendingPick: number[] | null = null;
   #rl: Interface;
+  #output: NodeJS.WritableStream;
 
   constructor(input: NodeJS.ReadableStream = stdin, output: NodeJS.WritableStream = stdout, game?: Game) {
     this.#rl = createInterface({ input, output });
+    this.#output = output;
     this.#game = game ?? new Game();
   }
 
@@ -120,6 +124,18 @@ export class Repl {
         this.#print(explainDemo2());
         this.#print(renderGame(this.#game));
         break;
+      case 'demo31':
+        this.#game = createDemo31Game();
+        this.#redoStack = [];
+        this.#print(explainDemo31());
+        this.#print(renderGame(this.#game));
+        break;
+      case 'demo32':
+        this.#game = createDemo32Game();
+        this.#redoStack = [];
+        this.#print(explainDemo32());
+        this.#print(renderGame(this.#game));
+        break;
       case 'quit':
         break; // handled in #handleLine
     }
@@ -150,7 +166,17 @@ export class Repl {
       return;
     }
 
-    // Same from/to via different capture paths → ask the user to disambiguate.
+    // If every match captures the same pieces, the path order does not affect
+    // the outcome; auto-pick the first one instead of asking.
+    const capturedKey = (idx: number): string =>
+      moves[idx].captured.map(p => p.hash()).sort((a, b) => a - b).join(',');
+    const firstKey = capturedKey(matches[0]);
+    if (matches.every(idx => capturedKey(idx) === firstKey)) {
+      this.#commitMove(matches[0]);
+      return;
+    }
+
+    // Same from/to but different captured sets → ask the user to disambiguate.
     this.#print(`Multiple moves match ${from.toString()} -> ${to.toString()}:`);
     matches.forEach((idx, n) => this.#print(`  ${n + 1}) ${formatMove(moves[idx])}`));
     this.#pendingPick = matches;
@@ -233,10 +259,10 @@ export class Repl {
   }
 
   #writePrompt(): void {
-    stdout.write(this.#pendingPick ? 'Pick a number: ' : '\n> ');
+    this.#output.write(this.#pendingPick ? 'Pick a number: ' : '\n> ');
   }
 
   #print(text: string): void {
-    stdout.write(`${text}\n`);
+    this.#output.write(`${text}\n`);
   }
 }

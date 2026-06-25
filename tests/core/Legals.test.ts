@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { Legals, CaptureTrace } from '../../src/core/Legals.js';
+import { Legals } from '../../src/core/Legals.js';
 import { Position } from '../../src/core/Position.js';
 
 describe('Legals - index validation', () => {

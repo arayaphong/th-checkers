@@ -863,8 +863,8 @@ describe('DameAnalyzer - Black Dame Pieces', () => {
 // TEST_CASE("Explorer - Dame complex capture sequences") — 1 section
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('Explorer - Dame complex capture sequences', () => {
-  // ── 37. "Complex capture pattern with 22 unique sequences" ──
-  test('Complex capture pattern with 22 unique sequences', () => {
+  // ── 37. "Complex capture pattern with distinct paths" ──
+  test('Complex capture pattern with distinct paths', () => {
     const focus = Position.fromString('D5');
     const board = Board.fromPieces(
       pieces(
@@ -885,8 +885,10 @@ describe('Explorer - Dame complex capture sequences', () => {
     const moves = analyzer.findValidMoves(focus);
     expect(moves.hasCaptured()).toBe(true);
 
+    // Distinct capture paths are preserved even when they capture the same
+    // pieces and land on the same square.
     const sequenceCount = moves.size();
-    expect(sequenceCount).toBe(22);
+    expect(sequenceCount).toBe(51);
 
     // Verify path length distribution
     const pathLengthCounts = new Map<number, number>();
@@ -896,10 +898,10 @@ describe('Explorer - Dame complex capture sequences', () => {
       pathLengthCounts.set(len, (pathLengthCounts.get(len) ?? 0) + 1);
     }
 
-    expect(pathLengthCounts.get(3)).toBe(2);  // 2 sequences with 3 captures
-    expect(pathLengthCounts.get(6)).toBe(6);  // 6 sequences with 6 captures
-    expect(pathLengthCounts.get(7)).toBe(10); // 10 sequences with 7 captures
+    expect(pathLengthCounts.get(3)).toBe(3);  // 3 sequences with 3 captures
+    expect(pathLengthCounts.get(6)).toBe(14); // 14 sequences with 6 captures
+    expect(pathLengthCounts.get(7)).toBe(14); // 14 sequences with 7 captures
     expect(pathLengthCounts.get(8)).toBe(2);  // 2 sequences with 8 captures
-    expect(pathLengthCounts.get(9)).toBe(2);  // 2 sequences with 9 captures
+    expect(pathLengthCounts.get(9)).toBe(18); // 18 sequences with 9 captures
   });
 });

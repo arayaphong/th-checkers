@@ -33,19 +33,29 @@ npm run repl        # interactive REPL with normal starting position
 npm run demo        # alias for npm run repl
 npm run demo:branching-capture
 npm run demo:loop-capture
+npm run demo:loop-branching-capture1
+npm run demo:loop-branching-capture2
 npm run test:dom
 npm run test:e2e
 npm run test:all
 ```
 
-`npm run build` compiles TypeScript into `dist/`. `npm test` runs all Jest suites through `ts-jest` in ESM mode. `npm run repl` (or `npm run demo`) starts the interactive REPL with a standard board. `npm run demo:branching-capture` loads a position where a piece has multiple capture paths to the same final square. `npm run demo:loop-capture` loads a position where a dame captures in a loop and lands back on its starting square. `npm run lint` runs ESLint over the source and test files.
+`npm run build` compiles TypeScript into `dist/`. `npm test` runs all Jest suites through `ts-jest` in ESM mode. `npm run lint` runs ESLint over the source and test files.
+
+Demo scripts:
+
+- `npm run repl` (or `npm run demo`) starts the interactive REPL with a standard board.
+- `npm run demo:branching-capture` loads a position where a piece has multiple capture paths to the same final square.
+- `npm run demo:loop-capture` loads a position where a dame captures in a loop and lands back on its starting square.
+- `npm run demo:loop-branching-capture1` loads a position where a dame has two mirror-image loop paths with the same from/to and captured pieces.
+- `npm run demo:loop-branching-capture2` loads the same ring with an extra central piece, creating additional branches.
 
 ### REPL commands
 
 Inside the REPL:
 
 - `<number>` — apply the numbered legal move
-- `<from> <to>` — apply a move by coordinates (e.g. `d5 d1`)
+- `<from> <to>` — apply a move by coordinates (e.g. `d5 d1`). If several moves share the same from/to and capture the same pieces, the first one is applied automatically; otherwise the REPL asks you to pick.
 - `trace <number>` or `trace <from> <to>` — show the full intermediate path of a move
 - `undo` / `u` — take back the last move
 - `redo` / `r` — re-apply a move undone with `undo`
@@ -54,7 +64,7 @@ Inside the REPL:
 - `help` / `h` / `?` — show command help
 - `quit` / `q` — exit
 
-`demo1` and `demo2` are hidden REPL commands that reload the branching-capture and loop-capture demo positions.
+`demo1`, `demo2`, `demo31`, and `demo32` are hidden REPL commands that reload the branching-capture, loop-capture, and two loop-branching-capture demo positions.
 
 `npm run test:dom` runs only the jsdom browser-client workflows. `npm run test:e2e` builds the project and runs the real Chromium workflow. `npm run test:all` runs both Jest and Playwright coverage.
 

@@ -55,14 +55,14 @@ export class Explorer {
   #findAllCaptureSequences(from: Position, color: PieceColor, isDame: boolean): CaptureSequence[] {
     const results = this.#findCapturesFrom(this.#board, from, color, isDame, []);
 
-    // Deduplicate: same captured set + same landing = same sequence
+    // Deduplicate exact sequences only; distinct paths that capture the same
+    // pieces in a different order or via different intermediate landings remain
+    // separate legal moves. The REPL auto-picks when applying by coordinates if
+    // the captured sets are equivalent.
     const seen = new Set<string>();
     const deduped: CaptureSequence[] = [];
     for (const seq of results) {
-      const captures: Position[] = [];
-      for (let i = 0; i < seq.length; i += 2) captures.push(seq[i]);
-      const landing = seq.at(-1)!;
-      const key = `${captures.map(c => c.hash()).sort((a, b) => a - b).join(',')}|${landing.hash()}`;
+      const key = seq.map(p => p.hash()).join(',');
       if (!seen.has(key)) {
         seen.add(key);
         deduped.push(seq);

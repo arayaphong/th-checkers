@@ -7,9 +7,6 @@ export interface MoveInfo {
   capturedPositions: Position[];
   /** Landing squares the moving piece visits, excluding its starting square. */
   path: Position[];
-  /** Raw capture sequence, present only for capture moves.
-   *  Format: [captured1, landing1, captured2, landing2, …, finalLanding]. */
-  captureSequence?: CaptureSequence;
 }
 
 export type CaptureSequence = Position[];
@@ -126,15 +123,14 @@ function processCaptureSequence(seq: readonly unknown[]): MoveInfo {
   // Even indices = captured pieces, odd indices = landing positions
   const captured: Position[] = [];
   const path: Position[] = [];
-  for (let i = 0; i < typed.length; i += 2) {
-    captured.push(typed[i]);
-    path.push(typed[i + 1]);
+  for (let i = 0; i < seq.length; i += 2) {
+    captured.push(seq[i]);
+    path.push(seq[i + 1]);
   }
   return {
     targetPosition: typed.at(-1) as Position, // last element = final landing
     capturedPositions: captured,
     path,
-    captureSequence: [...typed],
   };
 }
 

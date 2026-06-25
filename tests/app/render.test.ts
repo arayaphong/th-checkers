@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { Board, Game, Position, PieceColor, PieceType } from '../../src/index.js';
+import { Board, Game } from '../../src/index.js';
 import { formatMove, renderGame } from '../../src/app/render.js';
 
 describe('formatMove', () => {
